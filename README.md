@@ -20,6 +20,32 @@ npm run build
 
 O formulário de contato é somente uma prévia local. Ele não envia dados e não usa banco ou serviço externo.
 
+## Worktree de login e portal
+
+Esta branch adiciona uma área autenticada local em SQLite + Prisma.
+
+```bash
+Copy-Item .env.example .env
+npm run db:generate
+npm run db:migrate -- --name init
+npm run db:seed
+npm run dev
+```
+
+Contas locais de desenvolvimento, todas com a senha definida em `SEED_PASSWORD`:
+
+- `admin@teka.local` para `/admin`;
+- `terapeuta@teka.local` para agenda de terapeuta;
+- `cliente@teka.local` para `/portal`.
+
+Rotas adicionadas:
+
+- `/entrar` e `/cadastro`;
+- `/portal`, `/portal/agendar`, `/portal/consultas` e `/portal/contato`;
+- `/admin`, `/admin/agenda`, `/admin/clientes` e `/admin/mensagens`.
+
+O contato é assíncrono e orientado ao agendamento. Não há websocket, videochamada, email, pagamento ou serviço externo nesta fase.
+
 ## Estrutura para evolução
 
 - `app/page.tsx`: composição da homepage pública.
