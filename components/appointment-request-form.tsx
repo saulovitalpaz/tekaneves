@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { submitAppointmentRequest } from "@/lib/appointment-request-client";
 
 type Therapist = { id: string; name: string; specialty: string | null };
 
@@ -14,9 +15,8 @@ export function AppointmentRequestForm({ therapists }: { therapists: Therapist[]
     setFeedback("");
     setError(false);
     const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/v1/appointment-requests", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ therapistId: form.get("therapistId"), desiredStart: form.get("desiredStart"), durationMinutes: Number(form.get("durationMinutes")), message }) });
-    const result = await response.json();
-    if (!response.ok) { setError(true); setFeedback(result.error?.message ?? "Não foi possível solicitar o horário."); return; }
+    const result = await submitAppointmentRequest({ therapistId: form.get("therapistId"), desiredStart: form.get("desiredStart"), durationMinutes: Number(form.get("durationMinutes")), message });
+    if (!result.ok) { setError(true); setFeedback(result.message); return; }
     setMessage("");
     event.currentTarget.reset();
     setFeedback("Solicitação enviada. Você poderá acompanhar a confirmação em Consultas.");
