@@ -39,6 +39,33 @@ test("returns VALIDATION_ERROR for a missing or invalid homepage inquiry body", 
   });
 });
 
+test("returns VALIDATION_ERROR when a homepage inquiry includes recipientId", async () => {
+  const prismaWithInquiry = prisma as unknown as { homepageInquiry?: { create: (args: { data: unknown }) => Promise<{ id: string }> } };
+  const originalDescriptor = Object.getOwnPropertyDescriptor(prismaWithInquiry, "homepageInquiry");
+
+  Object.defineProperty(prismaWithInquiry, "homepageInquiry", {
+    configurable: true,
+    value: { create: async () => ({ id: "should-not-be-created" }) },
+  });
+
+  try {
+    const response = await POST(new Request("http://localhost/api/v1/homepage-inquiries", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...validPayload, recipientId: "recipient-1" }),
+    }));
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      data: null,
+      error: { code: "VALIDATION_ERROR", message: "Confira os campos obrigatórios." },
+    });
+  } finally {
+    if (originalDescriptor) Object.defineProperty(prismaWithInquiry, "homepageInquiry", originalDescriptor);
+    else delete prismaWithInquiry.homepageInquiry;
+  }
+});
+
 test("stores a valid homepage inquiry through only the HomepageInquiry Prisma delegate", async () => {
   const prismaWithInquiry = prisma as unknown as { homepageInquiry?: { create: (args: { data: unknown }) => Promise<{ id: string }> } };
   const originalDescriptor = Object.getOwnPropertyDescriptor(prismaWithInquiry, "homepageInquiry");
