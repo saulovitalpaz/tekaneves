@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { AppointmentStatus } from "@prisma/client";
+import { managedAppointmentWhere, validateAppointmentStatusTransition } from "@/lib/appointment-access";
 import { isSummaryEligible, upsertAppointmentSummary } from "@/lib/appointment-summaries";
 import { prisma } from "@/lib/db";
 
@@ -35,4 +36,19 @@ test("permite nota apenas em consultas confirmadas ou concluídas", () => {
   assert.equal(isSummaryEligible(AppointmentStatus.CONFIRMED), true);
   assert.equal(isSummaryEligible(AppointmentStatus.COMPLETED), true);
   assert.equal(isSummaryEligible(AppointmentStatus.CANCELLED), false);
+});
+
+test("gera escopo administrativo sem expor consulta para cliente ou outra profissional", () => {
+  assert.deepEqual(managedAppointmentWhere({ id: "admin", role: "ADMIN" }, "appt-1"), { id: "appt-1" });
+  assert.deepEqual(managedAppointmentWhere({ id: "teka", role: "THERAPIST" }, "appt-1"), { id: "appt-1", therapistId: "teka" });
+  assert.equal(managedAppointmentWhere({ id: "client", role: "CLIENT" }, "appt-1"), null);
+});
+
+test("bloqueia cancelamento de consulta confirmada quando já existe resumo privado", () => {
+  assert.deepEqual(validateAppointmentStatusTransition({ currentStatus: "CONFIRMED", nextStatus: "CANCELLED", hasSummary: true }), {
+    ok: false,
+    code: "SUMMARY_EXISTS",
+    message: "Remova o resumo privado antes de cancelar esta consulta.",
+  });
+  assert.deepEqual(validateAppointmentStatusTransition({ currentStatus: "CONFIRMED", nextStatus: "COMPLETED", hasSummary: true }), { ok: true });
 });
