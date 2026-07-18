@@ -47,6 +47,7 @@ model User {
   therapistRequests   AppointmentRequest[] @relation("TherapistRequests")
   clientAppointments  Appointment[]        @relation("ClientAppointments")
   therapistAppointments Appointment[]      @relation("TherapistAppointments")
+  authoredAppointmentSummaries AppointmentSummary[]
   sentMessages        ContactMessage[]     @relation("SentMessages")
   receivedMessages    ContactMessage[]     @relation("ReceivedMessages")
 }
@@ -126,9 +127,23 @@ model Appointment {
   client              User                @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
   therapist           User                @relation("TherapistAppointments", fields: [therapistId], references: [id], onDelete: Restrict)
   contactMessages     ContactMessage[]
+  summary             AppointmentSummary?
 
   @@index([clientId, startAt, status])
   @@index([therapistId, startAt, status])
+}
+
+model AppointmentSummary {
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  authorId      String
+  body          String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  author        User        @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([authorId, updatedAt])
 }
 
 model ContactMessage {

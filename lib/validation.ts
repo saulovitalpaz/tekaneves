@@ -34,6 +34,14 @@ export const appointmentDecisionSchema = z.object({
   adminNote: z.string().trim().max(1000).optional(),
 });
 
+export const appointmentSummaryBodySchema = z.object({
+  body: z.string().trim().min(1, "Escreva um resumo breve").max(4000, "O resumo deve ter até 4000 caracteres"),
+});
+
+export const appointmentStatusUpdateSchema = z.object({
+  status: z.enum(["COMPLETED", "CANCELLED"]),
+});
+
 export const contactMessageSchema = z.object({
   recipientId: z.string().cuid(),
   appointmentRequestId: z.string().cuid().optional(),
