@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type SiteHeaderProps = {
   brand: { name: string; descriptor: string };
   navigation: readonly { label: string; href: string }[];
@@ -5,20 +7,18 @@ type SiteHeaderProps = {
 
 export function SiteHeader({ brand, navigation }: SiteHeaderProps) {
   return (
-    <header className="section-shell" style={{ paddingTop: "1.25rem" }}>
-      <nav aria-label="Navegação principal" className="flex items-center justify-between gap-6">
-        <a href="#sobre" className="flex shrink-0 items-center gap-3" aria-label="Ir para sobre">
-          <span className="grid size-12 place-items-center rounded-full border border-[var(--forest)] text-xl text-[var(--forest)]" aria-hidden="true">TN</span>
-          <span className="hidden sm:block">
-            <span className="block display-font text-2xl text-[var(--forest-deep)]">{brand.name}</span>
-            <span className="block text-[0.58rem] font-bold uppercase tracking-[0.28em] text-[var(--muted)]">{brand.descriptor}</span>
+    <header className="site-header">
+      <nav aria-label="Navegação principal" className="section-shell site-header-content">
+        <Link href="/" className="site-brand" aria-label="Ir para página inicial">
+          <span className="site-brand-mark" aria-hidden="true">TN</span>
+          <span className="site-brand-copy">
+            <span className="site-brand-name display-font">{brand.name}</span>
+            <span className="site-brand-descriptor">{brand.descriptor}</span>
           </span>
-        </a>
-        <div className="hidden items-center gap-6 text-sm text-[var(--ink)] lg:flex">
-          {navigation.map((item) => <a key={item.href} href={item.href} className="transition-colors hover:text-[var(--gold)]">{item.label}</a>)}
-          <a className="button-primary site-header-cta" href="#contato">Falar comigo</a>
+        </Link>
+        <div className="site-nav">
+          {navigation.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}
         </div>
-        <span className="hidden text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted)] xl:block">Psicoterapia</span>
       </nav>
     </header>
   );
