@@ -270,6 +270,8 @@ button, input, textarea { font: inherit; }
 .appointment-summary-form { display: grid; gap: 0.55rem; max-width: 760px; }
 .appointment-summary-form textarea { min-height: 7rem; resize: vertical; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--paper); color: var(--ink); padding: 0.65rem; }
 .appointment-summary-form > div { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.next-appointment-card { max-width: 48rem; }
+.client-history-note { margin-top: 0.65rem; padding: 0.8rem; border-left: 2px solid var(--gold); background: var(--paper-deep); color: var(--muted); white-space: pre-wrap; }
 .decision-form { display: grid; gap: 0.5rem; min-width: min(100%, 300px); }
 .decision-form input { width: 100%; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--paper); color: var(--ink); padding: 0.55rem 0.6rem; }
 .decision-form > div { display: flex; flex-wrap: wrap; gap: 0.4rem; }

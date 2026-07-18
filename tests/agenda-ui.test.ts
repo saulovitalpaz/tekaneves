@@ -14,3 +14,14 @@ test("o portal do cliente não consulta resumo clínico", async () => {
   assert.match(source, /appointment\?\.status \?\? request\.status/);
   assert.doesNotMatch(source, /summary|AppointmentSummary/i);
 });
+
+test("o detalhe administrativo do cliente possui lembrete único e histórico privado", async () => {
+  const [clients, detail] = await Promise.all([
+    readFile("app/admin/clientes/page.tsx", "utf8"),
+    readFile("app/admin/clientes/[id]/page.tsx", "utf8"),
+  ]);
+  assert.match(clients, /href=\{`\/admin\/clientes\/\$\{client\.id\}`\}/);
+  assert.match(detail, /Próxima consulta/);
+  assert.match(detail, /findFirst/);
+  assert.match(detail, /summary/);
+});
