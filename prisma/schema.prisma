@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -34,103 +34,103 @@ enum HomepageInquirySource {
 }
 
 model User {
-  id                  String               @id @default(cuid())
-  name                String
-  email               String               @unique
-  passwordHash        String
-  role                UserRole             @default(CLIENT)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  sessions            Session[]
-  therapistProfile    TherapistProfile?
-  clientRequests      AppointmentRequest[] @relation("ClientRequests")
-  therapistRequests   AppointmentRequest[] @relation("TherapistRequests")
-  clientAppointments  Appointment[]        @relation("ClientAppointments")
-  therapistAppointments Appointment[]      @relation("TherapistAppointments")
-  authoredAppointmentSummaries AppointmentSummary[]
-  sentMessages        ContactMessage[]     @relation("SentMessages")
-  receivedMessages    ContactMessage[]     @relation("ReceivedMessages")
-  createdPreRegistrations PreRegistration[] @relation("CreatedPreRegistrations")
-  linkedPreRegistrations  PreRegistration[] @relation("LinkedPreRegistrations")
-  clientPreRegisteredAppointments PreRegisteredAppointment[] @relation("ClientPreRegisteredAppointments")
+  id                                 String                     @id @default(cuid())
+  name                               String
+  email                              String                     @unique
+  passwordHash                       String
+  role                               UserRole                   @default(CLIENT)
+  createdAt                          DateTime                   @default(now())
+  updatedAt                          DateTime                   @updatedAt
+  sessions                           Session[]
+  therapistProfile                   TherapistProfile?
+  clientRequests                     AppointmentRequest[]       @relation("ClientRequests")
+  therapistRequests                  AppointmentRequest[]       @relation("TherapistRequests")
+  clientAppointments                 Appointment[]              @relation("ClientAppointments")
+  therapistAppointments              Appointment[]              @relation("TherapistAppointments")
+  authoredAppointmentSummaries       AppointmentSummary[]
+  sentMessages                       ContactMessage[]           @relation("SentMessages")
+  receivedMessages                   ContactMessage[]           @relation("ReceivedMessages")
+  createdPreRegistrations            PreRegistration[]          @relation("CreatedPreRegistrations")
+  linkedPreRegistrations             PreRegistration[]          @relation("LinkedPreRegistrations")
+  clientPreRegisteredAppointments    PreRegisteredAppointment[] @relation("ClientPreRegisteredAppointments")
   therapistPreRegisteredAppointments PreRegisteredAppointment[] @relation("TherapistPreRegisteredAppointments")
-  createdPreRegisteredAppointments PreRegisteredAppointment[] @relation("CreatedPreRegisteredAppointments")
+  createdPreRegisteredAppointments   PreRegisteredAppointment[] @relation("CreatedPreRegisteredAppointments")
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
   userId    String
   expiresAt DateTime
   revokedAt DateTime?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
 }
 
 model TherapistProfile {
-  id            String         @id @default(cuid())
-  userId        String         @unique
-  bio           String?
-  specialty     String?
-  isPrimary     Boolean        @default(false)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String         @id @default(cuid())
+  userId         String         @unique
+  bio            String?
+  specialty      String?
+  isPrimary      Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   availabilities Availability[]
 
   @@index([isPrimary])
 }
 
 model Availability {
-  id                String          @id @default(cuid())
+  id                 String           @id @default(cuid())
   therapistProfileId String
-  weekday           Int
-  startMinutes     Int
-  endMinutes       Int
-  timezone         String          @default("America/Sao_Paulo")
-  isActive         Boolean         @default(true)
-  therapistProfile TherapistProfile @relation(fields: [therapistProfileId], references: [id], onDelete: Cascade)
+  weekday            Int
+  startMinutes       Int
+  endMinutes         Int
+  timezone           String           @default("America/Sao_Paulo")
+  isActive           Boolean          @default(true)
+  therapistProfile   TherapistProfile @relation(fields: [therapistProfileId], references: [id], onDelete: Cascade)
 
   @@index([therapistProfileId, weekday, isActive])
 }
 
 model AppointmentRequest {
-  id                String                    @id @default(cuid())
-  clientId          String
-  therapistId       String
-  desiredStart      DateTime
-  proposedStart     DateTime?
-  durationMinutes   Int                       @default(50)
-  message           String
-  adminNote         String?
-  status            AppointmentRequestStatus  @default(PENDING)
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
-  client            User                      @relation("ClientRequests", fields: [clientId], references: [id], onDelete: Cascade)
-  therapist         User                      @relation("TherapistRequests", fields: [therapistId], references: [id], onDelete: Restrict)
-  appointment       Appointment?
-  contactMessages   ContactMessage[]
+  id              String                   @id @default(cuid())
+  clientId        String
+  therapistId     String
+  desiredStart    DateTime
+  proposedStart   DateTime?
+  durationMinutes Int                      @default(50)
+  message         String
+  adminNote       String?
+  status          AppointmentRequestStatus @default(PENDING)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  client          User                     @relation("ClientRequests", fields: [clientId], references: [id], onDelete: Cascade)
+  therapist       User                     @relation("TherapistRequests", fields: [therapistId], references: [id], onDelete: Restrict)
+  appointment     Appointment?
+  contactMessages ContactMessage[]
 
   @@index([clientId, status, createdAt])
   @@index([therapistId, desiredStart, status])
 }
 
 model Appointment {
-  id                  String              @id @default(cuid())
-  requestId           String              @unique
+  id                  String                    @id @default(cuid())
+  requestId           String                    @unique
   clientId            String
   therapistId         String
   startAt             DateTime
   endAt               DateTime
-  status              AppointmentStatus   @default(CONFIRMED)
+  status              AppointmentStatus         @default(CONFIRMED)
   adminNote           String?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  request             AppointmentRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  client              User                @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
-  therapist           User                @relation("TherapistAppointments", fields: [therapistId], references: [id], onDelete: Restrict)
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  request             AppointmentRequest        @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  client              User                      @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
+  therapist           User                      @relation("TherapistAppointments", fields: [therapistId], references: [id], onDelete: Restrict)
   contactMessages     ContactMessage[]
   summary             AppointmentSummary?
   preRegisteredSource PreRegisteredAppointment? @relation("LinkedPreRegisteredAppointment")
@@ -140,17 +140,17 @@ model Appointment {
 }
 
 model PreRegistration {
-  id           String      @id @default(cuid())
+  id           String                     @id @default(cuid())
   name         String
   email        String?
   phone        String?
   note         String?
   linkedUserId String?
   createdById  String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  linkedUser   User?       @relation("LinkedPreRegistrations", fields: [linkedUserId], references: [id], onDelete: SetNull)
-  createdBy    User        @relation("CreatedPreRegistrations", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
+  linkedUser   User?                      @relation("LinkedPreRegistrations", fields: [linkedUserId], references: [id], onDelete: SetNull)
+  createdBy    User                       @relation("CreatedPreRegistrations", fields: [createdById], references: [id], onDelete: Restrict)
   appointments PreRegisteredAppointment[]
 
   @@index([linkedUserId, createdAt])
@@ -159,24 +159,24 @@ model PreRegistration {
 }
 
 model PreRegisteredAppointment {
-  id                String            @id @default(cuid())
-  preRegistrationId String
-  clientId          String?
-  therapistId       String
-  createdById       String
-  linkedAppointmentId String?         @unique
-  startAt           DateTime
-  endAt             DateTime
-  durationMinutes   Int               @default(50)
-  note              String?
-  status            AppointmentStatus @default(CONFIRMED)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  preRegistration   PreRegistration   @relation(fields: [preRegistrationId], references: [id], onDelete: Cascade)
-  client            User?             @relation("ClientPreRegisteredAppointments", fields: [clientId], references: [id], onDelete: SetNull)
-  therapist         User              @relation("TherapistPreRegisteredAppointments", fields: [therapistId], references: [id], onDelete: Restrict)
-  createdBy         User              @relation("CreatedPreRegisteredAppointments", fields: [createdById], references: [id], onDelete: Restrict)
-  linkedAppointment Appointment?      @relation("LinkedPreRegisteredAppointment", fields: [linkedAppointmentId], references: [id], onDelete: SetNull)
+  id                  String            @id @default(cuid())
+  preRegistrationId   String
+  clientId            String?
+  therapistId         String
+  createdById         String
+  linkedAppointmentId String?           @unique
+  startAt             DateTime
+  endAt               DateTime
+  durationMinutes     Int               @default(50)
+  note                String?
+  status              AppointmentStatus @default(CONFIRMED)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  preRegistration     PreRegistration   @relation(fields: [preRegistrationId], references: [id], onDelete: Cascade)
+  client              User?             @relation("ClientPreRegisteredAppointments", fields: [clientId], references: [id], onDelete: SetNull)
+  therapist           User              @relation("TherapistPreRegisteredAppointments", fields: [therapistId], references: [id], onDelete: Restrict)
+  createdBy           User              @relation("CreatedPreRegisteredAppointments", fields: [createdById], references: [id], onDelete: Restrict)
+  linkedAppointment   Appointment?      @relation("LinkedPreRegisteredAppointment", fields: [linkedAppointmentId], references: [id], onDelete: SetNull)
 
   @@index([preRegistrationId, startAt])
   @@index([clientId, startAt, status])

@@ -6,7 +6,5 @@ node_modules/
 .env.local
 .env.*.local
 !.env.example
-prisma/*.db
-prisma/*.db-journal
 tsconfig.tsbuildinfo
 .superpowers/sdd/
