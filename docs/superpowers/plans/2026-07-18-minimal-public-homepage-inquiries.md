@@ -4,7 +4,7 @@
 
 **Goal:** Build a concise public landing, route-based public contact, and a separate homepage inquiry inbox while preserving authenticated patient communication.
 
-**Architecture:** Public contact is stored in a new `HomepageInquiry` model and accessed through a public API route with server validation. Authenticated `ContactMessage` records retain their existing sender, recipient, and appointment relationships. A client-side floating dialog and a detailed contact-page form share a small public-inquiry client helper; the administration page renders the two inboxes independently.
+**Architecture:** Public contact is stored in a new `HomepageInquiry` model and accessed through a public API route with server validation. Authenticated `ContactMessage` records retain their existing sender, recipient, and appointment relationships; the Admin inbox explicitly includes messages addressed to the therapist account, while a therapist sees only messages addressed to them. A client-side floating dialog and a detailed contact-page form share a small public-inquiry client helper; the administration page renders the two inboxes independently.
 
 **Tech Stack:** Next.js 15 App Router, React 19, TypeScript, Prisma/SQLite, Zod, node:test, Lucide React, Tailwind CSS utilities with `app/globals.css`.
 
@@ -34,7 +34,7 @@
 - `app/page.tsx` and `app/contato/page.tsx` — compact public routes.
 - `components/site-header.tsx`, `components/contact-section.tsx`, `lib/content.ts`, `app/globals.css` — route navigation, public copy and focused styling.
 - `components/homepage-inquiry-list.tsx`, `app/admin/mensagens/page.tsx`, `app/admin/page.tsx` — isolated homepage inquiry display and counts.
-- `tests/homepage-content.test.ts`, `tests/public-inquiry.test.ts`, `tests/internal-message-delivery.test.ts` — regression coverage for public architecture and internal-message delivery.
+- `tests/homepage-content.test.ts`, `tests/public-inquiry.test.ts`, `tests/internal-message-delivery.test.ts` — regression coverage for public architecture and client-to-Teka internal-message delivery.
 
 ### Task 1: Diagnose and lock down authenticated internal-message delivery
 
@@ -45,14 +45,14 @@
 
 **Interfaces:**
 - Consumes: `ContactMessage`, `contactMessageSchema`, `getCurrentUser()`, `requireRole()` and `requireUser()`.
-- Produces: a verified invariant: a client-sent internal message is returned by the recipient’s inbox query and is not returned to unrelated users.
+- Produces: a verified invariant: a client-sent internal message is returned to its therapist recipient, is visible to an Admin as the Teka staff inbox, and is not returned to unrelated users.
 
 - [ ] **Step 1: Write the failing delivery regression test**
 
 Create a database-backed test or an extracted query helper test with the contract below. Do not test the current form’s optimistic text; test the actual recipient visibility predicate.
 
 ```ts
-test("a client message is visible to its therapist recipient only", async () => {
+test("a client message is visible to its therapist and Teka Admin inboxes only", async () => {
   const message = await prisma.contactMessage.create({
     data: {
       senderId: client.id,
@@ -63,9 +63,11 @@ test("a client message is visible to its therapist recipient only", async () => 
   });
 
   const therapistInbox = await listInternalInbox(therapist.id);
+  const adminInbox = await listTekaAdminInbox();
   const otherInbox = await listInternalInbox(otherTherapist.id);
 
   assert.equal(therapistInbox.some((item) => item.id === message.id), true);
+  assert.equal(adminInbox.some((item) => item.id === message.id), true);
   assert.equal(otherInbox.some((item) => item.id === message.id), false);
 });
 ```
@@ -78,7 +80,7 @@ Expected: FAIL until the test uses the production inbox query; if it passes afte
 
 - [ ] **Step 3: Extract one production inbox query when needed**
 
-If the page and API use divergent filters, create `lib/internal-messages.ts` with this exact public interface and use it in both portal and admin reads:
+Create `lib/internal-messages.ts` with these exact public interfaces and use them in the portal and admin reads:
 
 ```ts
 export async function listInternalInbox(recipientId: string) {
@@ -91,9 +93,20 @@ export async function listInternalInbox(recipientId: string) {
     orderBy: { createdAt: "desc" },
   });
 }
+
+export async function listTekaAdminInbox() {
+  return prisma.contactMessage.findMany({
+    where: { recipient: { role: "THERAPIST" } },
+    include: {
+      sender: { select: { id: true, name: true } },
+      recipient: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
 ```
 
-Keep the existing authenticated POST authorization checks. If the diagnosis proves the current backend is correct, modify only the page query/component behavior that is proven to hide a received record.
+Keep the existing authenticated POST authorization checks. In `/admin/mensagens`, use `listTekaAdminInbox()` only for role `ADMIN` and `listInternalInbox(user.id)` for role `THERAPIST`. In `ContactRequestForm`, call `router.refresh()` after the successful POST so the sender immediately sees the new message; recipient views update on their next navigation or refresh because real-time delivery is outside scope.
 
 - [ ] **Step 4: Re-run the delivery test and the existing suite**
 
@@ -104,8 +117,8 @@ Expected: all tests pass; the new test demonstrates recipient delivery and isola
 - [ ] **Step 5: Commit the isolated delivery fix or diagnostic regression test**
 
 ```bash
-git add tests/internal-message-delivery.test.ts app/api/v1/contact-messages/route.ts app/admin/mensagens/page.tsx app/portal/contato/page.tsx lib/internal-messages.ts
-git commit -m "fix: preserve internal message recipient delivery"
+git add tests/internal-message-delivery.test.ts components/contact-request-form.tsx app/admin/mensagens/page.tsx app/portal/contato/page.tsx lib/internal-messages.ts
+git commit -m "fix: deliver internal messages to Teka inbox"
 ```
 
 ### Task 2: Add the isolated public-inquiry data boundary
