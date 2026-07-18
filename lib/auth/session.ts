@@ -56,3 +56,14 @@ export async function destroySession() {
   if (token) await prisma.session.updateMany({ where: { tokenHash: hashToken(token) }, data: { revokedAt: new Date() } });
   cookieStore.delete(SESSION_COOKIE);
 }
+
+export async function revokeOtherSessions(userId: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!token) return;
+
+  await prisma.session.updateMany({
+    where: { userId, tokenHash: { not: hashToken(token) } },
+    data: { revokedAt: new Date() },
+  });
+}

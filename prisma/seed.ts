@@ -2,7 +2,13 @@ import { PrismaClient, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
-const seedPassword = process.env.SEED_PASSWORD ?? "TekaLocal2026!";
+function getSeedPassword() {
+  const value = process.env.SEED_PASSWORD;
+  if (!value) throw new Error("SEED_PASSWORD is required to run the seed.");
+  return value;
+}
+
+const seedPassword = getSeedPassword();
 
 async function upsertUser(email: string, name: string, role: UserRole) {
   const passwordHash = await bcrypt.hash(seedPassword, 12);
@@ -13,15 +19,29 @@ async function upsertUser(email: string, name: string, role: UserRole) {
   });
 }
 
+async function migrateLegacyEmail(oldEmail: string, newEmail: string) {
+  const [legacyUser, targetUser] = await Promise.all([
+    prisma.user.findUnique({ where: { email: oldEmail } }),
+    prisma.user.findUnique({ where: { email: newEmail } }),
+  ]);
+
+  if (legacyUser && !targetUser) {
+    await prisma.user.update({ where: { id: legacyUser.id }, data: { email: newEmail } });
+  }
+}
+
 async function main() {
-  const admin = await upsertUser("admin@teka.local", "Admin Teka", UserRole.ADMIN);
-  const therapist = await upsertUser("terapeuta@teka.local", "Teka Neves", UserRole.THERAPIST);
-  const client = await upsertUser("cliente@teka.local", "Cliente de Desenvolvimento", UserRole.CLIENT);
+  await migrateLegacyEmail("admin@teka.local", "vitoria@tekaneves.psi");
+  await migrateLegacyEmail("vitória@tekaneves.psi", "vitoria@tekaneves.psi");
+  await migrateLegacyEmail("terapeuta@teka.local", "marilene@tekaneves.psi");
+
+  const admin = await upsertUser("vitoria@tekaneves.psi", "Vitória Neves da Paz Lima", UserRole.ADMIN);
+  const therapist = await upsertUser("marilene@tekaneves.psi", "Marilene Neves da Paz Lima", UserRole.THERAPIST);
 
   const profile = await prisma.therapistProfile.upsert({
     where: { userId: therapist.id },
-    update: { specialty: "Psicoterapia", bio: "Acompanhamento cuidadoso para diferentes momentos da vida.", isPrimary: true },
-    create: { userId: therapist.id, specialty: "Psicoterapia", bio: "Acompanhamento cuidadoso para diferentes momentos da vida.", isPrimary: true },
+    update: { specialty: "Psicanalista", bio: "Acompanhamento cuidadoso para diferentes momentos da vida.", isPrimary: true },
+    create: { userId: therapist.id, specialty: "Psicanalista", bio: "Acompanhamento cuidadoso para diferentes momentos da vida.", isPrimary: true },
   });
 
   await prisma.availability.deleteMany({ where: { therapistProfileId: profile.id } });
@@ -55,8 +75,7 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${admin.email}, ${therapist.email} and ${client.email}`);
-  console.log(`Development password: ${seedPassword}`);
+  console.log(`Seeded internal accounts: ${admin.email} and ${therapist.email}`);
 }
 
 main().finally(() => prisma.$disconnect());

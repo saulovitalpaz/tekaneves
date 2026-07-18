@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Teka Neves | Psicoterapia",
+  title: "Teka Neves | Psicanálise",
   description:
     "Um espaço de escuta, cuidado e presença para diferentes momentos da vida.",
 };

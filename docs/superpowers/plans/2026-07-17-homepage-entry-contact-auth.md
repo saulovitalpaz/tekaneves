@@ -107,7 +107,7 @@ support: {
   eyebrow: "Acompanhamento",
   title: "Cuidar de si também pode ser uma forma de seguir em frente.",
   description:
-    "A psicoterapia oferece tempo e espaço para olhar para a sua história com mais gentileza, clareza e curiosidade.",
+    "A psicanálise oferece tempo e espaço para olhar para a sua história com mais gentileza, clareza e curiosidade.",
 },
 ```
 

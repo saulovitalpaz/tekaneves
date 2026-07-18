@@ -4,9 +4,8 @@ import { developmentAccounts, shouldShowDevelopmentAccess } from "@/lib/dev-acce
 
 test("development access lists the seeded local roles", () => {
   assert.deepEqual(developmentAccounts, [
-    { role: "Paciente", email: "cliente@teka.local" },
-    { role: "Terapeuta", email: "terapeuta@teka.local" },
-    { role: "Admin", email: "admin@teka.local" },
+    { role: "Terapeuta", email: "marilene@tekaneves.psi" },
+    { role: "Admin", email: "vitoria@tekaneves.psi" },
   ]);
 });
 

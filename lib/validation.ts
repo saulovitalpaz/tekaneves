@@ -12,6 +12,15 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({ email, password: z.string().min(1, "Informe sua senha") });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Informe sua senha atual"),
+  newPassword: password,
+  confirmPassword: password,
+}).refine((value) => value.newPassword === value.confirmPassword, {
+  message: "As novas senhas precisam coincidir",
+  path: ["confirmPassword"],
+});
+
 const availabilityFieldsSchema = z.object({
   weekday: z.number().int().min(0).max(6),
   startMinutes: z.number().int().min(0).max(1439),

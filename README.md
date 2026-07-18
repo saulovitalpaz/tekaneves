@@ -39,13 +39,12 @@ Consulte [docs/deploy/railway.md](docs/deploy/railway.md) para o fluxo de public
 
 ## Área autenticada
 
-Contas locais de desenvolvimento, todas com a senha definida em `SEED_PASSWORD`:
+Contas internas iniciais, com a senha definida em `SEED_PASSWORD`:
 
-- `admin@teka.local` para `/admin`;
-- `terapeuta@teka.local` para agenda de terapeuta;
-- `cliente@teka.local` para `/portal`.
+- `vitoria@tekaneves.psi` para `/admin`;
+- `marilene@tekaneves.psi` para agenda de terapeuta.
 
-O comando `npm run db:seed` cria ou atualiza as três contas. Todas usam a senha definida em `SEED_PASSWORD`, e `terapeuta@teka.local` é a conta usada para revisar solicitações e salvar disponibilidade na agenda.
+O comando `npm run db:seed` cria ou atualiza somente as duas contas internas. Clientes entram pelo autocadastro em `/cadastro`. Defina `SEED_PASSWORD` antes de executar o seed.
 
 Rotas adicionadas:
 

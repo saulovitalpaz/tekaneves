@@ -1,7 +1,6 @@
 export const developmentAccounts = [
-  { role: "Paciente", email: "cliente@teka.local" },
-  { role: "Terapeuta", email: "terapeuta@teka.local" },
-  { role: "Admin", email: "admin@teka.local" },
+  { role: "Terapeuta", email: "marilene@tekaneves.psi" },
+  { role: "Admin", email: "vitoria@tekaneves.psi" },
 ] as const;
 
 export function shouldShowDevelopmentAccess(nodeEnv = process.env.NODE_ENV) {

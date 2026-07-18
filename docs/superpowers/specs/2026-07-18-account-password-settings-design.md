@@ -2,7 +2,7 @@
 
 ## Contexto
 
-O beta já possui autenticação por sessão, autocadastro de clientes e seed das contas internas. As contas internas precisam usar os novos emails `vitória@tekaneves.psi` e `marilene@tekaneves.psi`, ambas com senha inicial `Sucesso!`. Clientes devem continuar sendo criados apenas pelo autocadastro. Depois do login, cada usuário precisa trocar a própria senha em uma área interna.
+O beta já possui autenticação por sessão, autocadastro de clientes e seed das contas internas. As contas internas precisam usar os novos emails `vitoria@tekaneves.psi` e `marilene@tekaneves.psi`, com senha inicial fornecida por `SEED_PASSWORD`. Clientes devem continuar sendo criados apenas pelo autocadastro. Depois do login, cada usuário precisa trocar a própria senha em uma área interna.
 
 ## Objetivos
 
@@ -18,14 +18,14 @@ O beta já possui autenticação por sessão, autocadastro de clientes e seed da
 
 ### Seed
 
-`prisma/seed.ts` manterá o helper de upsert para contas internas. O seed usará `SEED_PASSWORD` para a senha inicial, com valor local documentado como `Sucesso!`, e executará a atualização dos emails legados antes do upsert dos novos emails. O perfil e disponibilidade da terapeuta continuarão sendo atualizados normalmente. O seed não chamará mais `upsertUser` para cliente.
+`prisma/seed.ts` manterá o helper de upsert para contas internas. O seed usará `SEED_PASSWORD` para a senha inicial, configurada somente no ambiente, e executará a atualização dos emails legados antes do upsert dos novos emails. O perfil e disponibilidade da terapeuta continuarão sendo atualizados normalmente. O seed não chamará mais `upsertUser` para cliente.
 
 Os dados recomendados serão:
 
-| Função | Email inicial | Nome | Senha inicial |
+| Função | Email inicial | Nome | Credencial |
 |---|---|---|---|
-| Admin | `vitória@tekaneves.psi` | `Vitória Teka` | `Sucesso!` |
-| Terapeuta | `marilene@tekaneves.psi` | `Marilene Teka` | `Sucesso!` |
+| Admin | `vitoria@tekaneves.psi` | `Vitória Neves da Paz Lima` | `SEED_PASSWORD` |
+| Terapeuta | `marilene@tekaneves.psi` | `Marilene Neves da Paz Lima` | `SEED_PASSWORD` |
 
 ### API
 

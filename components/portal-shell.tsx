@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, ClipboardList, LayoutDashboard, MessageCircle } from "lucide-react";
+import { CalendarDays, ClipboardList, LayoutDashboard, MessageCircle, Settings } from "lucide-react";
 
 import { LogoutButton } from "@/components/logout-button";
 import { SafeUser } from "@/lib/auth/session";
@@ -17,6 +17,7 @@ export function PortalShell({ user, children }: { user: SafeUser; children: Reac
           <Link href="/portal/agendar"><CalendarDays size={16} />Agendar</Link>
           <Link href="/portal/consultas"><ClipboardList size={16} />Consultas</Link>
           <Link href="/portal/contato"><MessageCircle size={16} />Contato</Link>
+          <Link href="/configuracoes"><Settings size={16} />Configurações</Link>
         </nav>
         <div className="portal-actions">
           <span>{user.name}</span>

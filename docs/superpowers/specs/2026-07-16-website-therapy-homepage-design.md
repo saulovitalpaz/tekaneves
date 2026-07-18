@@ -1,4 +1,4 @@
-# Website de Psicoterapia: Homepage Inicial
+# Website de Psicanálise: Homepage Inicial
 
 ## Objetivo
 

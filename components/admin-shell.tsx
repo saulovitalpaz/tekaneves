@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, ClipboardList, LayoutDashboard, MessageCircle, Users } from "lucide-react";
+import { CalendarDays, ClipboardList, LayoutDashboard, MessageCircle, Settings, Users } from "lucide-react";
 
 import { LogoutButton } from "@/components/logout-button";
 import { SafeUser } from "@/lib/auth/session";
@@ -18,6 +18,7 @@ export function AdminShell({ user, children }: { user: SafeUser; children: React
           <Link href="/admin/resumos"><ClipboardList size={16} />Resumos</Link>
           <Link href="/admin/clientes"><Users size={16} />Clientes</Link>
           <Link href="/admin/mensagens"><MessageCircle size={16} />Mensagens</Link>
+          <Link href="/configuracoes"><Settings size={16} />Configurações</Link>
         </nav>
         <div className="portal-actions">
           <span>{user.name}</span>

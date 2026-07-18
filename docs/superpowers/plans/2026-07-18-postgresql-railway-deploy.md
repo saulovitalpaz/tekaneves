@@ -63,7 +63,7 @@ git commit -m "docs: record PostgreSQL deployment decision"
 
 - [ ] **Step 1: Change the datasource provider and local example URL**
 
-Set `provider = "postgresql"` in `prisma/schema.prisma` and use a clearly local PostgreSQL URL in `.env.example`, such as `postgresql://postgres:postgres@localhost:5432/teka_dev?schema=public`. Keep `SEED_PASSWORD` in the example.
+Set `provider = "postgresql"` in `prisma/schema.prisma` and use a clearly local PostgreSQL placeholder URL in `.env.example`. Keep `SEED_PASSWORD` as an environment-only placeholder in the example.
 
 - [ ] **Step 2: Generate the PostgreSQL baseline migration**
 
