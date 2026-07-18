@@ -1,7 +1,6 @@
 import { AppointmentStatus, AppointmentRequestStatus } from "@prisma/client";
 
 import { AppointmentDecisionForm } from "@/components/appointment-decision-form";
-import { AppointmentSummaryForm } from "@/components/appointment-summary-form";
 import { AvailabilityForm } from "@/components/availability-form";
 import { AvailabilityList } from "@/components/availability-list";
 import { requireRole } from "@/lib/auth/guards";
@@ -18,8 +17,8 @@ export default async function AdminAgendaPage() {
   const appointmentWhere = user.role === "ADMIN" ? {} : { therapistId: user.id };
   const [pending, confirmed, completed, profiles] = await Promise.all([
     prisma.appointmentRequest.findMany({ where: requestWhere, include: { client: true, therapist: true }, orderBy: { desiredStart: "asc" } }),
-    prisma.appointment.findMany({ where: { ...appointmentWhere, status: AppointmentStatus.CONFIRMED }, include: { client: true, therapist: true, summary: true }, orderBy: { startAt: "asc" } }),
-    prisma.appointment.findMany({ where: { ...appointmentWhere, status: AppointmentStatus.COMPLETED }, include: { client: true, therapist: true, summary: true }, orderBy: { startAt: "desc" } }),
+    prisma.appointment.findMany({ where: { ...appointmentWhere, status: AppointmentStatus.CONFIRMED }, include: { client: true, therapist: true }, orderBy: { startAt: "asc" } }),
+    prisma.appointment.findMany({ where: { ...appointmentWhere, status: AppointmentStatus.COMPLETED }, include: { client: true, therapist: true }, orderBy: { startAt: "desc" } }),
     prisma.therapistProfile.findMany({ where: user.role === "ADMIN" ? undefined : { userId: user.id }, include: { user: true, availabilities: { orderBy: { weekday: "asc" } } } }),
   ]);
 
@@ -29,7 +28,7 @@ export default async function AdminAgendaPage() {
         <div>
           <p className="eyebrow">Agenda</p>
           <h1 className="display-font">Horários com cuidado.</h1>
-          <p>Configure disponibilidade, acompanhe atendimentos e registre resumos privados.</p>
+          <p>Configure disponibilidade, acompanhe próximos atendimentos, solicitações e histórico.</p>
         </div>
       </div>
 
@@ -47,33 +46,8 @@ export default async function AdminAgendaPage() {
               <strong>{appointment.client.name}</strong>
               <span>{appointment.therapist.name} · {appointment.startAt.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })} · {durationMinutes(appointment.startAt, appointment.endAt)} min</span>
             </div>
-            <AppointmentSummaryForm appointmentId={appointment.id} initialBody={appointment.summary?.body ?? ""} status="CONFIRMED" />
           </article>
         )) : <div className="empty-state"><h3>Nenhum atendimento confirmado</h3><p>Consultas confirmadas aparecerão aqui.</p></div>}
-      </section>
-
-      <section className="portal-panel">
-        <div className="panel-heading"><div><p className="eyebrow">Histórico</p><h2 className="display-font">Atendimentos concluídos</h2></div></div>
-        {completed.length ? completed.map((appointment) => (
-          <article className="appointment-row" key={appointment.id}>
-            <div>
-              <strong>{appointment.client.name}</strong>
-              <span>{appointment.therapist.name} · {appointment.startAt.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })} · {durationMinutes(appointment.startAt, appointment.endAt)} min</span>
-            </div>
-            <AppointmentSummaryForm appointmentId={appointment.id} initialBody={appointment.summary?.body ?? ""} status="COMPLETED" />
-          </article>
-        )) : <div className="empty-state"><h3>Nenhum atendimento concluído</h3><p>O histórico aparecerá aqui após concluir uma consulta.</p></div>}
-      </section>
-
-      <section className="portal-panel">
-        <div className="panel-heading"><div><p className="eyebrow">Disponibilidades</p><h2 className="display-font">Janelas de atendimento</h2></div></div>
-        {profiles.map((profile) => (
-          <div className="availability-block" key={profile.id}>
-            <strong>{profile.user.name}</strong>
-            <AvailabilityList therapistId={profile.userId} items={profile.availabilities} />
-            <AvailabilityForm therapistId={profile.userId} />
-          </div>
-        ))}
       </section>
 
       <section className="portal-panel">
@@ -88,6 +62,29 @@ export default async function AdminAgendaPage() {
             <AppointmentDecisionForm requestId={request.id} />
           </article>
         ))}</div> : <div className="empty-state"><h3>Nenhuma solicitação pendente</h3><p>Quando um cliente pedir um horário, ele aparecerá aqui.</p></div>}
+      </section>
+
+      <section className="portal-panel">
+        <div className="panel-heading"><div><p className="eyebrow">Histórico</p><h2 className="display-font">Atendimentos concluídos</h2></div></div>
+        {completed.length ? completed.map((appointment) => (
+          <article className="appointment-row" key={appointment.id}>
+            <div>
+              <strong>{appointment.client.name}</strong>
+              <span>{appointment.therapist.name} · {appointment.startAt.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })} · {durationMinutes(appointment.startAt, appointment.endAt)} min</span>
+            </div>
+          </article>
+        )) : <div className="empty-state"><h3>Nenhum atendimento concluído</h3><p>O histórico aparecerá aqui após concluir uma consulta.</p></div>}
+      </section>
+
+      <section className="portal-panel">
+        <div className="panel-heading"><div><p className="eyebrow">Disponibilidades</p><h2 className="display-font">Janelas de atendimento</h2></div></div>
+        {profiles.map((profile) => (
+          <div className="availability-block" key={profile.id}>
+            <strong>{profile.user.name}</strong>
+            <AvailabilityList therapistId={profile.userId} items={profile.availabilities} />
+            <AvailabilityForm therapistId={profile.userId} />
+          </div>
+        ))}
       </section>
     </div>
   );

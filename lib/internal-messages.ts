@@ -20,3 +20,18 @@ export async function listTekaAdminInbox() {
     orderBy: { createdAt: "desc" },
   });
 }
+
+type MessagingScope = {
+  id: string;
+  role: "ADMIN" | "THERAPIST" | "CLIENT";
+};
+
+export async function listClientMessageRecipients(user: MessagingScope) {
+  if (user.role === "CLIENT") return [];
+
+  return prisma.user.findMany({
+    where: { role: "CLIENT" },
+    select: { id: true, name: true, email: true, role: true },
+    orderBy: { name: "asc" },
+  });
+}
