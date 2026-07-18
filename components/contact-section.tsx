@@ -1,4 +1,4 @@
-import { ContactForm } from "./contact-form";
+import { PublicInquiryForm } from "./public-inquiry-form";
 
 type ContactSectionProps = {
   content: {
@@ -17,7 +17,7 @@ export function ContactSection({ content }: ContactSectionProps) {
     <section id="contato" className="contact-section" aria-labelledby="contact-title">
       <div className="section-shell soft-panel contact-panel">
         <div><p className="eyebrow">{content.eyebrow}</p><h2 id="contact-title" className="display-font section-heading">{content.title}</h2><p className="section-intro">{content.description}</p></div>
-        <ContactForm nameLabel={content.nameLabel} emailLabel={content.emailLabel} messageLabel={content.messageLabel} submitLabel={content.submitLabel} />
+        <PublicInquiryForm variant="detailed" />
       </div>
     </section>
   );
