@@ -20,8 +20,8 @@ async function main() {
 
   const profile = await prisma.therapistProfile.upsert({
     where: { userId: therapist.id },
-    update: { specialty: "Psicoterapia", bio: "Acompanhamento cuidadoso para diferentes momentos da vida." },
-    create: { userId: therapist.id, specialty: "Psicoterapia", bio: "Acompanhamento cuidadoso para diferentes momentos da vida." },
+    update: { specialty: "Psicoterapia", bio: "Acompanhamento cuidadoso para diferentes momentos da vida.", isPrimary: true },
+    create: { userId: therapist.id, specialty: "Psicoterapia", bio: "Acompanhamento cuidadoso para diferentes momentos da vida.", isPrimary: true },
   });
 
   await prisma.availability.deleteMany({ where: { therapistProfileId: profile.id } });

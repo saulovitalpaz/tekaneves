@@ -2,11 +2,12 @@ import { ContactRequestForm } from "@/components/contact-request-form";
 import { MessageList } from "@/components/message-list";
 import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { getPrimaryTherapist } from "@/lib/primary-therapist";
 
 export default async function PortalContactPage() {
   const user = await requireUser();
   const [therapist, requests, messages] = await Promise.all([
-    prisma.user.findFirst({ where: { role: "THERAPIST" }, select: { id: true, name: true } }),
+    getPrimaryTherapist(),
     prisma.appointmentRequest.findMany({ where: { clientId: user.id }, select: { id: true, desiredStart: true, therapist: { select: { name: true } } }, orderBy: { desiredStart: "desc" } }),
     prisma.contactMessage.findMany({ where: { OR: [{ senderId: user.id }, { recipientId: user.id }] }, include: { sender: { select: { name: true } }, recipient: { select: { name: true } } }, orderBy: { createdAt: "desc" } }),
   ]);
