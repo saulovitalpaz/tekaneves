@@ -15,10 +15,18 @@
 - Cliente não recebe rota, campo, contagem, indicador ou conteúdo de `AppointmentSummary`.
 - Uma nota tem entre 1 e 4.000 caracteres e só pode existir para consulta `CONFIRMED` ou `COMPLETED`.
 - Cada consulta possui no máximo uma nota; atualizações preservam a autoria original e atualizam `updatedAt`.
-- Consultas `CANCELLED` não aceitam nota. Excluir uma disponibilidade não altera consultas confirmadas.
+- Consultas `CANCELLED` não aceitam nota. Cancelar uma consulta que já possui nota deve retornar 409 e manter a consulta confirmada até a nota ser removida por alteração futura explicitamente planejada.
+- Excluir uma disponibilidade não altera consultas confirmadas.
 - Não adicionar dependências, prontuário completo, anexos, recorrência, notificações em tempo real ou integração externa de calendário.
 
 ---
+
+## Política de execução
+
+- Não rodar verificação global depois de cada task. Durante as tasks, rodar apenas o teste focado do arquivo alterado quando ele agrega sinal real.
+- Não gastar ciclo obrigatório comprovando falha quando o arquivo já está em estado parcial ou a ausência do símbolo é óbvia. Criar/ajustar o teste e implementar direto, mantendo a verificação global para a Task 6.
+- `npm run lint`, `npm run build`, `npm test` e checagem manual ficam concentrados na Task 6 para evitar conflitos artificiais enquanto as tasks ainda estão incompletas entre si.
+- Se uma task deixar o projeto temporariamente sem build por depender da task seguinte, registrar isso no relatório da task e seguir a ordem planejada; não abrir refatoração paralela.
 
 ## Estrutura de arquivos
 
@@ -28,6 +36,7 @@
 | `prisma/migrations/20260718100000_add_appointment_summaries/migration.sql` | Criar tabela, chave única da consulta e índices. |
 | `lib/validation.ts` | Validar resumo, edição de disponibilidade e mudança de estado da consulta. |
 | `lib/appointment-summaries.ts` | Centralizar status permitidos e o upsert que preserva o autor. |
+| `lib/appointment-access.ts` | Centralizar escopo administrativo e transição de estado das consultas. |
 | `app/api/v1/appointments/[id]/summary/route.ts` | Leitura e gravação autorizadas da nota privada. |
 | `app/api/v1/appointments/[id]/route.ts` | Concluir ou cancelar uma consulta confirmada. |
 | `app/api/v1/availability/admin/[id]/route.ts` | Editar e excluir uma janela de disponibilidade. |
@@ -35,6 +44,7 @@
 | `components/availability-list.tsx` | Acionar edição e exclusão de uma disponibilidade renderizada no servidor. |
 | `components/appointment-summary-form.tsx` | Salvar uma nota e concluir/cancelar a consulta sem sair da agenda. |
 | `app/admin/agenda/page.tsx` | Resumo, próximas consultas, histórico, disponibilidades e solicitações. |
+| `app/portal/consultas/page.tsx` | Mostrar o estado real da consulta ao cliente sem consultar nem indicar resumo clínico. |
 | `app/admin/clientes/page.tsx` | Link para o detalhe de cada cliente autorizado. |
 | `app/admin/clientes/[id]/page.tsx` | Próxima consulta e histórico administrativo de um cliente. |
 | `app/globals.css` | Estilos responsivos dos novos controles, listas e cartões. |
@@ -94,24 +104,22 @@ test("permite nota apenas em consultas confirmadas ou concluídas", () => {
 });
 ```
 
-- [ ] **Step 2: Executar o teste para confirmar a falha**
+- [ ] **Step 2: Registrar o estado do teste focado**
 
 Run: `npx tsx --test tests/appointment-summary.test.ts`
 
-Expected: FAIL porque `AppointmentSummary`, `isSummaryEligible` e `upsertAppointmentSummary` ainda não existem.
+Expected: FAIL se `AppointmentSummary`, `isSummaryEligible` e `upsertAppointmentSummary` ainda não existirem. Se o arquivo já existir em estado parcial, não gastar tempo ajustando a falha intermediária; seguir para a implementação e validar no Step 5.
 
 - [ ] **Step 3: Adicionar o modelo, relações e validação**
 
-Em `prisma/schema.prisma`, adicionar as relações inversas e o modelo abaixo:
+Em `prisma/schema.prisma`, inserir os campos de relação nos modelos `User` e `Appointment` já existentes e adicionar o novo modelo `AppointmentSummary`. Não criar um segundo bloco `model User` nem um segundo bloco `model Appointment`.
 
 ```prisma
-model User {
-  authoredAppointmentSummaries AppointmentSummary[]
-}
+// Dentro do model User existente:
+authoredAppointmentSummaries AppointmentSummary[]
 
-model Appointment {
-  summary AppointmentSummary?
-}
+// Dentro do model Appointment existente:
+summary AppointmentSummary?
 
 model AppointmentSummary {
   id            String      @id @default(cuid())
@@ -206,43 +214,68 @@ git commit -m "feat: persist private appointment summaries"
 
 **Files:**
 - Modify: `lib/validation.ts`
+- Create: `lib/appointment-access.ts`
 - Create: `app/api/v1/appointments/[id]/summary/route.ts`
 - Create: `app/api/v1/appointments/[id]/route.ts`
 - Modify: `tests/appointment-summary.test.ts`
 
 **Interfaces:**
 - Consumes: `appointmentSummaryBodySchema`, `appointmentStatusUpdateSchema`, `isSummaryEligible` e `upsertAppointmentSummary` da Task 1.
+- Produces: `managedAppointmentWhere(user, id)` e `validateAppointmentStatusTransition(input)` para manter autorização e bloqueio de cancelamento testáveis fora das rotas.
 - Produces: `GET`/`PUT /api/v1/appointments/:id/summary` e `PATCH /api/v1/appointments/:id`.
 
-- [ ] **Step 1: Escrever testes de autorização como escopos de consulta**
+- [ ] **Step 1: Escrever testes focados de autorização e transição**
 
-Acrescentar a `tests/appointment-summary.test.ts` o teste abaixo para fixar a regra usada pelas duas rotas:
+Acrescentar a `tests/appointment-summary.test.ts` os testes abaixo para fixar as regras usadas pelas rotas sem depender de mocks de sessão do Next:
 
 ```ts
-test("isola consultas de outra profissional e mantém Admin com visão geral", async () => {
-  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  const [client, owner, other] = await Promise.all([
-    prisma.user.create({ data: { name: "Cliente", email: `client-${suffix}@test.local`, passwordHash: "hash", role: "CLIENT" } }),
-    prisma.user.create({ data: { name: "Responsável", email: `owner-${suffix}@test.local`, passwordHash: "hash", role: "THERAPIST" } }),
-    prisma.user.create({ data: { name: "Outra", email: `other-${suffix}@test.local`, passwordHash: "hash", role: "THERAPIST" } }),
-  ]);
-  const request = await prisma.appointmentRequest.create({ data: { clientId: client.id, therapistId: owner.id, desiredStart: new Date("2030-02-01T10:00:00.000Z"), durationMinutes: 50, message: "Consulta" } });
-  const appointment = await prisma.appointment.create({ data: { requestId: request.id, clientId: client.id, therapistId: owner.id, startAt: new Date("2030-02-01T10:00:00.000Z"), endAt: new Date("2030-02-01T10:50:00.000Z") } });
+import { managedAppointmentWhere, validateAppointmentStatusTransition } from "@/lib/appointment-access";
 
-  try {
-    assert.equal(await prisma.appointment.findFirst({ where: { id: appointment.id, therapistId: other.id } }), null);
-    assert.equal((await prisma.appointment.findUnique({ where: { id: appointment.id } }))?.therapistId, owner.id);
-  } finally {
-    await prisma.user.deleteMany({ where: { id: { in: [client.id, owner.id, other.id] } } });
-  }
+test("gera escopo administrativo sem expor consulta para cliente ou outra profissional", () => {
+  assert.deepEqual(managedAppointmentWhere({ id: "admin", role: "ADMIN" }, "appt-1"), { id: "appt-1" });
+  assert.deepEqual(managedAppointmentWhere({ id: "teka", role: "THERAPIST" }, "appt-1"), { id: "appt-1", therapistId: "teka" });
+  assert.equal(managedAppointmentWhere({ id: "client", role: "CLIENT" }, "appt-1"), null);
+});
+
+test("bloqueia cancelamento de consulta confirmada quando já existe resumo privado", () => {
+  assert.deepEqual(validateAppointmentStatusTransition({ currentStatus: "CONFIRMED", nextStatus: "CANCELLED", hasSummary: true }), {
+    ok: false,
+    code: "SUMMARY_EXISTS",
+    message: "Remova o resumo privado antes de cancelar esta consulta.",
+  });
+  assert.deepEqual(validateAppointmentStatusTransition({ currentStatus: "CONFIRMED", nextStatus: "COMPLETED", hasSummary: true }), { ok: true });
 });
 ```
 
-- [ ] **Step 2: Executar o teste para confirmar a falha de cobertura**
+- [ ] **Step 2: Criar as funções compartilhadas de autorização e transição**
 
-Run: `npx tsx --test tests/appointment-summary.test.ts`
+Criar `lib/appointment-access.ts`:
 
-Expected: PASS de dados atuais; o teste novo documenta o escopo obrigatório antes da implementação das rotas.
+```ts
+import { AppointmentStatus } from "@prisma/client";
+
+import type { SafeUser } from "@/lib/auth/session";
+
+type ManagedRole = Pick<SafeUser, "id" | "role">;
+type AppointmentStatusValue = `${AppointmentStatus}`;
+type TransitionInput = { currentStatus: AppointmentStatusValue; nextStatus: "COMPLETED" | "CANCELLED"; hasSummary: boolean };
+
+export function managedAppointmentWhere(user: ManagedRole, id: string) {
+  if (user.role === "ADMIN") return { id };
+  if (user.role === "THERAPIST") return { id, therapistId: user.id };
+  return null;
+}
+
+export function validateAppointmentStatusTransition(input: TransitionInput) {
+  if (input.currentStatus !== "CONFIRMED") {
+    return { ok: false as const, code: "INVALID_STATUS_TRANSITION", message: "Somente consultas confirmadas podem ser concluídas ou canceladas." };
+  }
+  if (input.nextStatus === "CANCELLED" && input.hasSummary) {
+    return { ok: false as const, code: "SUMMARY_EXISTS", message: "Remova o resumo privado antes de cancelar esta consulta." };
+  }
+  return { ok: true as const };
+}
+```
 
 - [ ] **Step 3: Criar a rota de leitura e gravação do resumo**
 
@@ -250,15 +283,17 @@ Criar `app/api/v1/appointments/[id]/summary/route.ts` com uma consulta única qu
 
 ```ts
 import { apiData, apiError } from "@/lib/api";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getCurrentUser, type SafeUser } from "@/lib/auth/session";
+import { managedAppointmentWhere } from "@/lib/appointment-access";
 import { prisma } from "@/lib/db";
 import { isSummaryEligible, upsertAppointmentSummary } from "@/lib/appointment-summaries";
 import { appointmentSummaryBodySchema } from "@/lib/validation";
 
-async function findManagedAppointment(user: { id: string; role: string }, id: string) {
-  if (!["ADMIN", "THERAPIST"].includes(user.role)) return null;
+async function findManagedAppointment(user: Pick<SafeUser, "id" | "role">, id: string) {
+  const where = managedAppointmentWhere(user, id);
+  if (!where) return null;
   return prisma.appointment.findFirst({
-    where: user.role === "ADMIN" ? { id } : { id, therapistId: user.id },
+    where,
     include: { summary: true },
   });
 }
@@ -294,6 +329,7 @@ Criar `app/api/v1/appointments/[id]/route.ts`:
 ```ts
 import { apiData, apiError } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth/session";
+import { managedAppointmentWhere, validateAppointmentStatusTransition } from "@/lib/appointment-access";
 import { prisma } from "@/lib/db";
 import { appointmentStatusUpdateSchema } from "@/lib/validation";
 
@@ -303,24 +339,27 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const parsed = appointmentStatusUpdateSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Confira o novo estado da consulta.", 400);
   const { id } = await context.params;
-  const appointment = await prisma.appointment.findFirst({ where: user.role === "ADMIN" ? { id } : { id, therapistId: user.id } });
+  const where = managedAppointmentWhere(user, id);
+  if (!where) return apiError("FORBIDDEN", "Você não pode alterar esta consulta.", 403);
+  const appointment = await prisma.appointment.findFirst({ where, include: { summary: { select: { id: true } } } });
   if (!appointment) return apiError("FORBIDDEN", "Você não pode alterar esta consulta.", 403);
-  if (appointment.status !== "CONFIRMED") return apiError("INVALID_STATUS_TRANSITION", "Somente consultas confirmadas podem ser concluídas ou canceladas.", 409);
+  const transition = validateAppointmentStatusTransition({ currentStatus: appointment.status, nextStatus: parsed.data.status, hasSummary: Boolean(appointment.summary) });
+  if (!transition.ok) return apiError(transition.code, transition.message, 409);
   const updated = await prisma.appointment.update({ where: { id }, data: { status: parsed.data.status } });
   return apiData({ id: updated.id, status: updated.status });
 }
 ```
 
-- [ ] **Step 5: Executar os testes e a verificação de tipos**
+- [ ] **Step 5: Executar o teste focado**
 
-Run: `npx tsx --test tests/appointment-summary.test.ts && npm run lint`
+Run: `npx tsx --test tests/appointment-summary.test.ts`
 
-Expected: PASS; TypeScript reconhece as duas rotas e os tipos do Prisma.
+Expected: PASS para persistência, elegibilidade, escopo administrativo e bloqueio de cancelamento com nota. A verificação completa de tipos fica na Task 6.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add lib/validation.ts app/api/v1/appointments tests/appointment-summary.test.ts
+git add lib/validation.ts lib/appointment-access.ts app/api/v1/appointments tests/appointment-summary.test.ts
 git commit -m "feat: secure appointment summaries and completion"
 ```
 
@@ -358,19 +397,33 @@ test("aceita uma janela válida para edição", () => {
 });
 ```
 
-- [ ] **Step 2: Executar o teste para confirmar a falha**
+- [ ] **Step 2: Implementar o schema de edição sem duplicar regra de intervalo**
 
-Run: `npx tsx --test tests/availability-management.test.ts`
-
-Expected: FAIL porque `availabilityUpdateSchema` ainda não existe.
-
-- [ ] **Step 3: Extrair o esquema de edição e implementar as rotas**
-
-Em `lib/validation.ts`, definir o esquema sem `therapistId`:
+Em `lib/validation.ts`, substituir a definição atual de `availabilitySchema` por um schema base reutilizável. Não usar `availabilitySchema.omit(...)`, porque `availabilitySchema` recebe `.refine(...)` e deixa de expor `omit()` diretamente.
 
 ```ts
-export const availabilityUpdateSchema = availabilitySchema.omit({ therapistId: true });
+const availabilityFieldsSchema = z.object({
+  weekday: z.number().int().min(0).max(6),
+  startMinutes: z.number().int().min(0).max(1439),
+  endMinutes: z.number().int().min(1).max(1440),
+  timezone: z.string().min(1).default("America/Sao_Paulo"),
+  isActive: z.boolean().default(true),
+});
+
+function hasValidAvailabilityRange(value: { startMinutes: number; endMinutes: number }) {
+  return value.endMinutes > value.startMinutes;
+}
+
+export const availabilitySchema = availabilityFieldsSchema
+  .extend({ therapistId: z.string().cuid() })
+  .refine(hasValidAvailabilityRange, { message: "O fim deve ser depois do início", path: ["endMinutes"] });
+
+export const availabilityUpdateSchema = availabilityFieldsSchema
+  .refine(hasValidAvailabilityRange, { message: "O fim deve ser depois do início", path: ["endMinutes"] });
 ```
+
+- [ ] **Step 3: Implementar as rotas de edição e exclusão**
+
 
 Criar `app/api/v1/availability/admin/[id]/route.ts`:
 
@@ -416,10 +469,31 @@ Atualizar a interface de `AvailabilityForm` para receber um item opcional e esco
 type AvailabilityValues = { id?: string; weekday: number; startMinutes: number; endMinutes: number; timezone: string; isActive: boolean };
 
 export function AvailabilityForm({ therapistId, availability, onDone }: { therapistId: string; availability?: AvailabilityValues; onDone?: () => void }) {
-  const method = availability ? "PATCH" : "POST";
-  const url = availability ? `/api/v1/availability/admin/${availability.id}` : "/api/v1/availability/admin";
-  const payload = { weekday, startMinutes, endMinutes, timezone: "America/Sao_Paulo", isActive: true, ...(availability ? {} : { therapistId }) };
-  // Usar fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }).
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const toMinutes = (value: string) => { const [hours, minutes] = value.split(":").map(Number); return hours * 60 + minutes; };
+    const method = availability ? "PATCH" : "POST";
+    const url = availability ? `/api/v1/availability/admin/${availability.id}` : "/api/v1/availability/admin";
+    const payload = {
+      weekday: Number(form.get("weekday")),
+      startMinutes: toMinutes(String(form.get("start"))),
+      endMinutes: toMinutes(String(form.get("end"))),
+      timezone: "America/Sao_Paulo",
+      isActive: availability?.isActive ?? true,
+      ...(availability ? {} : { therapistId }),
+    };
+    const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    if (!response.ok) {
+      const result = await response.json();
+      setError(result.error?.message ?? "Não foi possível salvar.");
+      return;
+    }
+    event.currentTarget.reset();
+    setError("");
+    router.refresh();
+    onDone?.();
+  }
 }
 ```
 
@@ -432,11 +506,11 @@ Criar `components/availability-list.tsx` como componente cliente que renderiza c
 
 Após `PATCH`, `POST` ou `DELETE`, chamar `router.refresh()` e fechar a edição. A exclusão não consulta nem altera `Appointment`.
 
-- [ ] **Step 5: Executar os testes de validação e tipos**
+- [ ] **Step 5: Executar o teste focado de validação**
 
-Run: `npx tsx --test tests/availability-management.test.ts && npm run lint`
+Run: `npx tsx --test tests/availability-management.test.ts`
 
-Expected: PASS; a rota recebe somente dados de janela na edição.
+Expected: PASS; a rota recebe somente dados de janela na edição. A verificação completa de tipos fica na Task 6.
 
 - [ ] **Step 6: Commit**
 
@@ -449,6 +523,7 @@ git commit -m "feat: manage therapist availability windows"
 
 **Files:**
 - Modify: `app/admin/agenda/page.tsx`
+- Modify: `app/portal/consultas/page.tsx`
 - Create: `components/appointment-summary-form.tsx`
 - Modify: `app/globals.css`
 - Create: `tests/agenda-ui.test.ts`
@@ -475,15 +550,16 @@ test("a agenda administrativa inclui consultas confirmadas, concluídas e notas"
 
 test("o portal do cliente não consulta resumo clínico", async () => {
   const source = await readFile("app/portal/consultas/page.tsx", "utf8");
+  assert.match(source, /appointment\?\.status \?\? request\.status/);
   assert.doesNotMatch(source, /summary|AppointmentSummary/i);
 });
 ```
 
-- [ ] **Step 2: Executar o teste para confirmar a falha**
+- [ ] **Step 2: Registrar o estado do teste focado**
 
 Run: `npx tsx --test tests/agenda-ui.test.ts`
 
-Expected: FAIL porque a agenda ainda não consulta `AppointmentStatus.COMPLETED` nem renderiza `AppointmentSummaryForm`.
+Expected: FAIL se a agenda ainda não consulta `AppointmentStatus.COMPLETED`, ainda não renderiza `AppointmentSummaryForm`, ou se o portal ainda não usa o estado real de `appointment`. Não investir em ajustes intermediários antes dos Steps 3 a 5.
 
 - [ ] **Step 3: Criar o formulário de nota e de conclusão**
 
@@ -548,7 +624,19 @@ Renderizar, nesta ordem, os seguintes blocos compactos:
 
 Cada item de consulta mostra cliente, profissional, início, fim e duração em minutos. Não incluir consultas `CANCELLED` na seção de notas.
 
-- [ ] **Step 5: Adicionar apenas estilos de suporte responsivos**
+- [ ] **Step 5: Atualizar o portal do cliente sem expor nota**
+
+Em `app/portal/consultas/page.tsx`, manter o `include: { therapist: true, appointment: true }`, não incluir `summary` e renderizar o estado real da consulta quando ela existir:
+
+```tsx
+const visibleStatus = request.appointment?.status ?? request.status;
+
+<span className={`status-chip ${visibleStatus.toLowerCase()}`}>{statusLabels[visibleStatus]}</span>
+```
+
+Isso evita a inconsistência em que uma consulta concluída ou cancelada no modelo `Appointment` continuaria aparecendo como `CONFIRMED` por causa do status antigo de `AppointmentRequest`.
+
+- [ ] **Step 6: Adicionar apenas estilos de suporte responsivos**
 
 Em `app/globals.css`, acrescentar estilos para manter controles legíveis sem criar um novo sistema visual:
 
@@ -561,16 +649,16 @@ Em `app/globals.css`, acrescentar estilos para manter controles legíveis sem cr
 @media (max-width: 720px) { .appointment-row { gap: 0.7rem; } }
 ```
 
-- [ ] **Step 6: Executar a verificação da agenda**
+- [ ] **Step 7: Executar o teste focado da agenda**
 
-Run: `npx tsx --test tests/agenda-ui.test.ts && npm run lint`
+Run: `npx tsx --test tests/agenda-ui.test.ts`
 
-Expected: PASS; o portal do cliente continua sem referência a notas.
+Expected: PASS; o portal do cliente usa o estado real da consulta e continua sem referência a notas. A verificação completa de tipos fica na Task 6.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add app/admin/agenda/page.tsx components/appointment-summary-form.tsx app/globals.css tests/agenda-ui.test.ts
+git add app/admin/agenda/page.tsx app/portal/consultas/page.tsx components/appointment-summary-form.tsx app/globals.css tests/agenda-ui.test.ts
 git commit -m "feat: add operational appointment agenda"
 ```
 
@@ -598,16 +686,16 @@ test("o detalhe administrativo do cliente possui lembrete único e histórico pr
   ]);
   assert.match(clients, /href=\{`\/admin\/clientes\/\$\{client\.id\}`\}/);
   assert.match(detail, /Próxima consulta/);
-  assert.match(detail, /take: 1/);
+  assert.match(detail, /findFirst/);
   assert.match(detail, /summary/);
 });
 ```
 
-- [ ] **Step 2: Executar o teste para confirmar a falha**
+- [ ] **Step 2: Registrar o estado do teste focado**
 
 Run: `npx tsx --test tests/agenda-ui.test.ts`
 
-Expected: FAIL porque a página de detalhe ainda não existe.
+Expected: FAIL se a página de detalhe ainda não existir. Não ajustar a falha intermediária antes dos Steps 3 a 5.
 
 - [ ] **Step 3: Ligar a lista ao detalhe autorizado**
 
@@ -622,7 +710,9 @@ const clients = await prisma.user.findMany({
 });
 
 <Link className="list-row" href={`/admin/clientes/${client.id}`} key={client.id}>
-  {/* conteúdo atual do cliente */}
+  <Users size={22} />
+  <div><strong>{client.name}</strong><span>{client.email}</span></div>
+  <span>{client._count.clientRequests} solicitações · {client._count.clientAppointments} consultas</span>
 </Link>
 ```
 
@@ -658,7 +748,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
 
 O histórico é somente leitura: não renderizar `AppointmentSummaryForm` no detalhe. Exibir a nota apenas quando `summary` existir, com data da atualização e nome de `summary.author`.
 
-- [ ] **Step 5: Ajustar o estilo do lembrete e executar o teste**
+- [ ] **Step 5: Ajustar o estilo do lembrete e executar o teste focado**
 
 Adicionar em `app/globals.css`:
 
@@ -669,9 +759,9 @@ Adicionar em `app/globals.css`:
 
 Aplicar `next-appointment-card` ao cartão de lembrete e `client-history-note` ao conteúdo da nota.
 
-Run: `npx tsx --test tests/agenda-ui.test.ts && npm run lint`
+Run: `npx tsx --test tests/agenda-ui.test.ts`
 
-Expected: PASS; a lista aponta para o detalhe e o lembrete usa somente a primeira consulta futura confirmada.
+Expected: PASS; a lista aponta para o detalhe e o lembrete usa somente a primeira consulta futura confirmada. A verificação completa de tipos fica na Task 6.
 
 - [ ] **Step 6: Commit**
 
@@ -710,8 +800,9 @@ Expected: servidor em execução local. Conferir, em perfis/sessões separados:
 1. Teka abre `/admin/agenda`, edita e exclui apenas as próprias disponibilidades, confirma um pedido, registra nota e conclui a consulta.
 2. Admin abre a mesma rota, visualiza agendas e notas de todas as profissionais, e abre o detalhe de qualquer cliente.
 3. Outro usuário `THERAPIST` não encontra consulta, disponibilidade nem cliente da Teka por URL ou endpoint.
-4. Cliente abre `/portal/consultas` e vê somente a consulta e seu estado, sem nota, indicador de nota ou link administrativo.
-5. Em `/admin/clientes/:id`, o cartão superior mostra somente a consulta confirmada futura mais próxima; sem próxima consulta, mostra o estado vazio definido.
+4. Ao tentar cancelar uma consulta confirmada que já possui resumo privado, a API retorna 409 e a consulta permanece confirmada.
+5. Cliente abre `/portal/consultas` e vê somente a consulta e seu estado real (`COMPLETED` ou `CANCELLED` quando houver `Appointment` atualizado), sem nota, indicador de nota ou link administrativo.
+6. Em `/admin/clientes/:id`, o cartão superior mostra somente a consulta confirmada futura mais próxima; sem próxima consulta, mostra o estado vazio definido.
 
 - [ ] **Step 4: Revisar o diff final**
 
@@ -731,9 +822,10 @@ Executar este commit apenas se o Step 1 revelar uma lacuna e o teste for realmen
 ## Revisão de cobertura do plano
 
 - Agenda com solicitações, confirmadas e concluídas: Tasks 2 e 4.
-- Conclusão, histórico e cancelamento de uma consulta confirmada: Task 2 e Task 4.
+- Conclusão, histórico e cancelamento de uma consulta confirmada sem nota: Task 2 e Task 4.
+- Bloqueio de cancelamento quando já existe nota privada: Task 2 e Task 6.
 - Resumo uma-para-um, privado, com autoria preservada: Tasks 1 e 2.
 - Edição e exclusão de disponibilidade: Task 3.
 - Restrições de Teka, Admin e cliente: Tasks 2, 4, 5 e 6.
 - Histórico por cliente e lembrete da próxima consulta confirmada: Task 5.
-- Sigilo do cliente e regressão de portal: Tasks 4, 5 e 6.
+- Sigilo do cliente, ausência de notas no portal e estado visível consistente com `Appointment.status`: Tasks 4, 5 e 6.
