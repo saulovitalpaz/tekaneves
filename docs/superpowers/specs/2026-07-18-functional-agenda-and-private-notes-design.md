@@ -7,11 +7,13 @@ Transformar a área de agenda da Teka em uma visão operacional: disponibilidade
 ## Escopo aprovado
 
 - Mostrar a agenda da psicanalista com solicitações, consultas confirmadas e consultas concluídas.
+- Manter toda a operação de agenda concentrada em `/admin/agenda`.
 - Permitir editar e excluir disponibilidades já registradas, além de criar novas.
 - Restringir a agenda da Teka ao próprio perfil; o Admin master mantém visão geral de todas as agendas.
 - Criar uma nota clínica/resumo por atendimento confirmado ou concluído.
 - Permitir visualizar e editar essas notas apenas para a psicanalista relacionada ao atendimento ou para o Admin master.
 - Não incluir notas, nem seus indicadores, nas rotas ou telas do cliente.
+- Criar, no submenu administrativo de Clientes, um detalhe por cliente com histórico de atendimentos e notas privadas autorizadas.
 - Preservar solicitações, confirmação, cancelamento, disponibilidade e mensagens existentes.
 
 Fora de escopo: prontuário completo, anexos, diagnóstico, prescrições, exportação, notificações em tempo real, recorrência automática e integração de calendário externo.
@@ -27,6 +29,13 @@ Fora de escopo: prontuário completo, anexos, diagnóstico, prescrições, expor
 5. **Solicitações** — mantém as decisões de confirmar, propor outro horário ou recusar.
 
 Em perfil `THERAPIST`, todas as consultas, disponibilidades e notas ficam restritas ao `therapistId` da sessão. Em perfil `ADMIN`, as informações continuam visíveis para gestão e podem ser filtradas por profissional quando houver mais de uma.
+
+### Clientes (`/admin/clientes`)
+
+- A lista de clientes passa a ter um link de detalhe para `/admin/clientes/[id]`.
+- A página de detalhe mostra os dados básicos do cliente, suas consultas confirmadas/concluídas/canceladas em ordem cronológica e, para cada consulta com nota, o resumo privado de atendimento.
+- O detalhe reutiliza as mesmas regras de acesso: Teka só vê clientes vinculados a seus próprios atendimentos; Admin pode ver todos.
+- O cliente não recebe link, rota, indicador ou resposta de API que revele a existência dessas notas.
 
 ## Dados e acesso
 
@@ -65,6 +74,7 @@ Usar upsert para manter uma única nota por atendimento. A autoria é a pessoa q
 - `AvailabilityForm` ganha modo de edição; `AvailabilityList` ou componente equivalente apresenta ações por janela.
 - `AppointmentSummaryForm` é um componente cliente com feedback local e atualização de rota após salvar.
 - A página da agenda busca consultas e resumos no servidor; a nota é aberta na própria página, sem uma rota pública adicional.
+- Criar `app/admin/clientes/[id]/page.tsx` para o histórico administrativo do cliente; o resumo é apresentado em leitura nessa tela e continua editável exclusivamente pela agenda.
 
 ## Histórico e estados
 
@@ -80,11 +90,13 @@ Usar upsert para manter uma única nota por atendimento. A autoria é a pessoa q
 - Testes de disponibilidade: terapeuta atualiza/remove só a própria janela; Admin pode administrar; intervalo inválido é rejeitado.
 - `npm test`, `npm run lint` e `npm run build` passam.
 - Conferência manual em perfis isolados: Teka vê e edita sua agenda/nota; Admin vê gestão; cliente vê somente suas consultas, sem notas.
+- Conferir o detalhe de cliente: Teka vê somente histórico de clientes próprios; Admin vê qualquer cliente; o cliente não acessa a rota administrativa.
 
 ## Critérios de aceite
 
 - Teka consegue ver agenda, histórico e disponibilidades em uma tela útil.
 - Disponibilidades podem ser adicionadas, editadas e removidas.
 - Cada atendimento confirmado ou concluído aceita uma nota privada de resumo.
+- O submenu Clientes permite abrir o histórico individual e ler os resumos privados autorizados.
 - Notas não são retornadas, renderizadas nem indicadas para o cliente.
 - Admin master mantém acesso de gestão, sem ampliar a visibilidade entre clientes.
