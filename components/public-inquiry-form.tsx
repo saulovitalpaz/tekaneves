@@ -20,7 +20,6 @@ export function PublicInquiryForm({ variant }: PublicInquiryFormProps) {
   const isDetailed = variant === "detailed";
 
   async function submitForm(form: HTMLFormElement, source: SubmissionSource) {
-
     if (!form.checkValidity()) {
       setHasError(true);
       setFeedback("Confira os campos obrigatórios antes de continuar.");
@@ -48,7 +47,7 @@ export function PublicInquiryForm({ variant }: PublicInquiryFormProps) {
       setFeedback(source === "WHATSAPP" ? "Mensagem registrada. Vamos continuar no WhatsApp." : "Mensagem enviada com sucesso. Em breve entraremos em contato.");
 
       if (source === "WHATSAPP") {
-        window.open(buildWhatsAppUrl(payload), "_blank", "noopener,noreferrer");
+        window.location.assign(buildWhatsAppUrl(payload));
       }
     } catch (error) {
       setHasError(true);

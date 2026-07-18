@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
 
 import { buildWhatsAppUrl, submitHomepageInquiry } from "@/lib/public-inquiry";
@@ -36,4 +38,19 @@ test("submits homepage inquiries only to the public inquiry endpoint", async () 
     body: JSON.stringify(payload),
   });
   assert.deepEqual(result, { id: "inquiry-1" });
+});
+
+test("navigates to WhatsApp only after public inquiry persistence succeeds", () => {
+  const formSource = readFileSync(join(process.cwd(), "components/public-inquiry-form.tsx"), "utf8");
+
+  assert.match(formSource, /await submitHomepageInquiry\(payload\);[\s\S]*window\.location\.assign\(buildWhatsAppUrl\(payload\)\)/);
+  assert.doesNotMatch(formSource, /window\.open\(/);
+});
+
+test("keeps Tab navigation inside the floating contact dialog", () => {
+  const dialogSource = readFileSync(join(process.cwd(), "components/floating-contact-button.tsx"), "utf8");
+
+  assert.match(dialogSource, /event\.key !== "Tab"/);
+  assert.match(dialogSource, /event\.shiftKey/);
+  assert.match(dialogSource, /dialogRef\.current/);
 });

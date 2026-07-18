@@ -22,7 +22,29 @@ export function FloatingContactButton() {
     dialogRef.current?.querySelector<HTMLInputElement>("input[name='name']")?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") closeDialog();
+      if (event.key === "Escape") {
+        closeDialog();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusableElements = Array.from(dialog.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"));
+      const firstFocusable = focusableElements[0];
+      const lastFocusable = focusableElements.at(-1);
+
+      if (!firstFocusable || !lastFocusable) {
+        event.preventDefault();
+      } else if (event.shiftKey && document.activeElement === firstFocusable) {
+        event.preventDefault();
+        lastFocusable.focus();
+      } else if (!event.shiftKey && document.activeElement === lastFocusable) {
+        event.preventDefault();
+        firstFocusable.focus();
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
