@@ -33,6 +33,7 @@ Em perfil `THERAPIST`, todas as consultas, disponibilidades e notas ficam restri
 ### Clientes (`/admin/clientes`)
 
 - A lista de clientes passa a ter um link de detalhe para `/admin/clientes/[id]`.
+- No topo do detalhe, um único card de lembrete mostra a próxima consulta confirmada do cliente, com data, horário e profissional; quando não houver consulta futura, mostra um estado vazio curto.
 - A página de detalhe mostra os dados básicos do cliente, suas consultas confirmadas/concluídas/canceladas em ordem cronológica e, para cada consulta com nota, o resumo privado de atendimento.
 - O detalhe reutiliza as mesmas regras de acesso: Teka só vê clientes vinculados a seus próprios atendimentos; Admin pode ver todos.
 - O cliente não recebe link, rota, indicador ou resposta de API que revele a existência dessas notas.
@@ -91,6 +92,7 @@ Usar upsert para manter uma única nota por atendimento. A autoria é a pessoa q
 - `npm test`, `npm run lint` e `npm run build` passam.
 - Conferência manual em perfis isolados: Teka vê e edita sua agenda/nota; Admin vê gestão; cliente vê somente suas consultas, sem notas.
 - Conferir o detalhe de cliente: Teka vê somente histórico de clientes próprios; Admin vê qualquer cliente; o cliente não acessa a rota administrativa.
+- Conferir o lembrete de próxima consulta: mostra apenas a consulta confirmada futura mais próxima e não mostra nota clínica.
 
 ## Critérios de aceite
 
@@ -98,5 +100,6 @@ Usar upsert para manter uma única nota por atendimento. A autoria é a pessoa q
 - Disponibilidades podem ser adicionadas, editadas e removidas.
 - Cada atendimento confirmado ou concluído aceita uma nota privada de resumo.
 - O submenu Clientes permite abrir o histórico individual e ler os resumos privados autorizados.
+- O detalhe de cliente mostra apenas um lembrete objetivo da próxima consulta confirmada.
 - Notas não são retornadas, renderizadas nem indicadas para o cliente.
 - Admin master mantém acesso de gestão, sem ampliar a visibilidade entre clientes.
