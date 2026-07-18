@@ -245,9 +245,15 @@ button, input, textarea { font: inherit; }
 .auth-error { margin: 0; color: #8d3b2f; font-size: 0.86rem; line-height: 1.5; }
 .auth-switch { margin: 1.5rem 0 0; color: var(--muted); font-size: 0.9rem; text-align: center; }
 .auth-switch a { color: var(--forest); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.dev-access { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: 0.75rem; background: var(--paper-deep); color: var(--muted); font-size: 0.84rem; line-height: 1.6; }
+.dev-access-title { margin: 0; color: var(--forest); font-size: 0.9rem; font-weight: 700; }
+.dev-access p:not(.dev-access-title) { margin: 0.5rem 0 0; }
+.dev-access code { color: var(--forest); font-size: 0.8rem; }
+.dev-access ul { margin: 0.75rem 0 0; padding-left: 1.2rem; }
+.dev-access li + li { margin-top: 0.25rem; }
 
 .portal-page { min-height: 100dvh; background: var(--paper); color: var(--ink); }
-.portal-topbar { display: flex; align-items: center; gap: 2rem; min-height: 4.75rem; padding: 0 2rem; background: #062851; color: var(--white); }
+.portal-topbar { display: flex; align-items: center; gap: 2rem; min-height: 4.75rem; padding: 0 2rem; background: var(--forest-deep); color: var(--white); }
 .portal-brand { display: flex; align-items: center; gap: 0.75rem; min-width: 215px; }
 .portal-brand strong, .portal-brand small { display: block; }
 .portal-brand strong { font-size: 0.95rem; }
