@@ -60,6 +60,41 @@ export const contactMessageSchema = z.object({
   body: z.string().trim().min(1).max(2000),
 });
 
+const manualAppointmentBaseSchema = z.object({
+  therapistId: z.string().cuid(),
+  startAt: isoDate,
+  durationMinutes: z.number().int().min(30).max(120).default(50),
+  note: z.string().trim().max(1000).optional(),
+});
+
+export const registeredAppointmentCreateSchema = manualAppointmentBaseSchema.extend({
+  mode: z.literal("REGISTERED"),
+  clientId: z.string().cuid(),
+});
+
+export const preRegisteredAppointmentCreateSchema = manualAppointmentBaseSchema.extend({
+  mode: z.literal("PRE_REGISTERED"),
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().toLowerCase().optional().or(z.literal("")),
+  phone: z.string().trim().max(40).optional(),
+});
+
+export const adminAppointmentCreateSchema = z.discriminatedUnion("mode", [
+  registeredAppointmentCreateSchema,
+  preRegisteredAppointmentCreateSchema,
+]);
+
+export const preRegistrationLinkSchema = z.object({
+  clientId: z.string().cuid(),
+});
+
+export const homepageQuoteSettingsSchema = z.object({
+  isQuoteCardVisible: z.boolean(),
+  isAutoGenerateActive: z.boolean(),
+  manualQuoteText: z.string().trim().min(3, "Escreva uma frase").max(240, "A frase deve ter até 240 caracteres"),
+  manualQuoteAuthor: z.string().trim().min(2, "Informe o autor").max(80, "O autor deve ter até 80 caracteres"),
+});
+
 export const homepageInquirySchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome").max(120),
   email,

@@ -21,6 +21,19 @@ export async function listTekaAdminInbox() {
   });
 }
 
+export async function listInternalConversation(currentUserId: string, partnerId: string) {
+  return prisma.contactMessage.findMany({
+    where: {
+      OR: [
+        { senderId: currentUserId, recipientId: partnerId },
+        { senderId: partnerId, recipientId: currentUserId },
+      ],
+    },
+    include: messageRelations,
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+}
+
 type MessagingScope = {
   id: string;
   role: "ADMIN" | "THERAPIST" | "CLIENT";

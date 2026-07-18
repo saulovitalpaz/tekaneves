@@ -35,6 +35,26 @@ async function main() {
     ],
   });
 
+  const existingQuoteSettings = await prisma.homepageQuoteSettings.findFirst();
+  if (existingQuoteSettings) {
+    await prisma.homepageQuoteSettings.update({
+      where: { id: existingQuoteSettings.id },
+      data: {
+        manualQuoteText: "A escuta cuidadosa ajuda a abrir novos caminhos.",
+        manualQuoteAuthor: "Teka Neves",
+      },
+    });
+  } else {
+    await prisma.homepageQuoteSettings.create({
+      data: {
+        isQuoteCardVisible: false,
+        isAutoGenerateActive: false,
+        manualQuoteText: "A escuta cuidadosa ajuda a abrir novos caminhos.",
+        manualQuoteAuthor: "Teka Neves",
+      },
+    });
+  }
+
   console.log(`Seeded ${admin.email}, ${therapist.email} and ${client.email}`);
   console.log(`Development password: ${seedPassword}`);
 }

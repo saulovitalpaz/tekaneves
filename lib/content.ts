@@ -8,12 +8,12 @@ export const siteContent = {
     { label: "Área do paciente", href: "/entrar" },
   ],
   home: {
-    eyebrow: "Psicoterapia para universitários",
-    title: "A sua vida não precisa caber no limite do esgotamento.",
-    description: "Psicoterapia para estudantes que precisam recuperar fôlego, foco e espaço para si.",
-    contactLabel: "Conhecer o acompanhamento",
+    eyebrow: "Psicanalista",
+    title: "Teka Neves",
+    description: "Teka Neves, psicanalista. Um espaço para escutar o que pede atenção.",
+    contactLabel: "Entrar em contato",
     imageAlt: "Retrato de Teka Neves usando uma camisa azul e óculos claros.",
     imagePriority: true,
   },
-  footer: "Website em desenvolvimento local. Informações de atendimento serão adicionadas em breve.",
+  footer: "Atendimento em psicanálise com escuta cuidadosa e contato reservado.",
 } as const;

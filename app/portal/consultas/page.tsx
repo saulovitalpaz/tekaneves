@@ -1,5 +1,6 @@
 import { CalendarDays } from "lucide-react";
 
+import { AppointmentProposalActions } from "@/components/appointment-proposal-actions";
 import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 
@@ -28,9 +29,12 @@ export default async function ConsultationsPage() {
                   <CalendarDays size={22} />
                   <div>
                     <strong>{request.therapist.name}</strong>
-                    <span>{request.desiredStart.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</span>
+                    <span>{(request.proposedStart ?? request.desiredStart).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</span>
                   </div>
                   <span className={`status-chip ${visibleStatus.toLowerCase()}`}>{statusLabels[visibleStatus]}</span>
+                  {request.status === "PROPOSED" && request.proposedStart && (
+                    <AppointmentProposalActions requestId={request.id} therapistId={request.therapistId} proposedStart={request.proposedStart} />
+                  )}
                 </article>
               );
             })}

@@ -50,6 +50,11 @@ model User {
   authoredAppointmentSummaries AppointmentSummary[]
   sentMessages        ContactMessage[]     @relation("SentMessages")
   receivedMessages    ContactMessage[]     @relation("ReceivedMessages")
+  createdPreRegistrations PreRegistration[] @relation("CreatedPreRegistrations")
+  linkedPreRegistrations  PreRegistration[] @relation("LinkedPreRegistrations")
+  clientPreRegisteredAppointments PreRegisteredAppointment[] @relation("ClientPreRegisteredAppointments")
+  therapistPreRegisteredAppointments PreRegisteredAppointment[] @relation("TherapistPreRegisteredAppointments")
+  createdPreRegisteredAppointments PreRegisteredAppointment[] @relation("CreatedPreRegisteredAppointments")
 }
 
 model Session {
@@ -128,9 +133,55 @@ model Appointment {
   therapist           User                @relation("TherapistAppointments", fields: [therapistId], references: [id], onDelete: Restrict)
   contactMessages     ContactMessage[]
   summary             AppointmentSummary?
+  preRegisteredSource PreRegisteredAppointment? @relation("LinkedPreRegisteredAppointment")
 
   @@index([clientId, startAt, status])
   @@index([therapistId, startAt, status])
+}
+
+model PreRegistration {
+  id           String      @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  note         String?
+  linkedUserId String?
+  createdById  String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  linkedUser   User?       @relation("LinkedPreRegistrations", fields: [linkedUserId], references: [id], onDelete: SetNull)
+  createdBy    User        @relation("CreatedPreRegistrations", fields: [createdById], references: [id], onDelete: Restrict)
+  appointments PreRegisteredAppointment[]
+
+  @@index([linkedUserId, createdAt])
+  @@index([createdById, createdAt])
+  @@index([email])
+}
+
+model PreRegisteredAppointment {
+  id                String            @id @default(cuid())
+  preRegistrationId String
+  clientId          String?
+  therapistId       String
+  createdById       String
+  linkedAppointmentId String?         @unique
+  startAt           DateTime
+  endAt             DateTime
+  durationMinutes   Int               @default(50)
+  note              String?
+  status            AppointmentStatus @default(CONFIRMED)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  preRegistration   PreRegistration   @relation(fields: [preRegistrationId], references: [id], onDelete: Cascade)
+  client            User?             @relation("ClientPreRegisteredAppointments", fields: [clientId], references: [id], onDelete: SetNull)
+  therapist         User              @relation("TherapistPreRegisteredAppointments", fields: [therapistId], references: [id], onDelete: Restrict)
+  createdBy         User              @relation("CreatedPreRegisteredAppointments", fields: [createdById], references: [id], onDelete: Restrict)
+  linkedAppointment Appointment?      @relation("LinkedPreRegisteredAppointment", fields: [linkedAppointmentId], references: [id], onDelete: SetNull)
+
+  @@index([preRegistrationId, startAt])
+  @@index([clientId, startAt, status])
+  @@index([therapistId, startAt, status])
+  @@index([createdById, createdAt])
 }
 
 model AppointmentSummary {
@@ -179,4 +230,14 @@ model HomepageInquiry {
 
   @@index([readAt, createdAt])
   @@index([source, createdAt])
+}
+
+model HomepageQuoteSettings {
+  id                   String   @id @default(cuid())
+  isQuoteCardVisible   Boolean  @default(false)
+  isAutoGenerateActive Boolean  @default(false)
+  manualQuoteText      String
+  manualQuoteAuthor    String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }

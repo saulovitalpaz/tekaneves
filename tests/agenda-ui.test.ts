@@ -28,6 +28,19 @@ test("submenu de resumos concentra formulários vinculados a consultas confirmad
   assert.match(summaries, /therapist: true/);
 });
 
+test("painel administrativo remove atalhos redundantes e agenda recebe inserção manual", async () => {
+  const [adminPage, agendaPage] = await Promise.all([
+    readFile("app/admin/page.tsx", "utf8"),
+    readFile("app/admin/agenda/page.tsx", "utf8"),
+  ]);
+
+  assert.doesNotMatch(adminPage, /quick-links/);
+  assert.doesNotMatch(adminPage, /Organizar agenda/);
+  assert.match(agendaPage, /AdminAppointmentForm/);
+  assert.match(agendaPage, /PreRegistrationLinkForm/);
+  assert.match(agendaPage, /Pré-cadastros/);
+});
+
 test("o portal do cliente não consulta resumo clínico", async () => {
   const source = await readFile("app/portal/consultas/page.tsx", "utf8");
   assert.match(source, /appointment\?\.status \?\? request\.status/);

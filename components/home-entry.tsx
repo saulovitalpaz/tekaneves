@@ -25,6 +25,7 @@ export function HomeEntry({ content }: HomeEntryProps) {
           </div>
         </div>
         <div className="home-profile">
+          <h2 className="display-font home-profile-title">{content.title}</h2>
           <Image
             className="home-profile-image"
             src="/images/profile.jpeg"

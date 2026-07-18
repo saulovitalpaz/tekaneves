@@ -1,8 +1,10 @@
 import { AppointmentStatus, AppointmentRequestStatus } from "@prisma/client";
 
+import { AdminAppointmentForm } from "@/components/admin-appointment-form";
 import { AppointmentDecisionForm } from "@/components/appointment-decision-form";
 import { AvailabilityForm } from "@/components/availability-form";
 import { AvailabilityList } from "@/components/availability-list";
+import { PreRegistrationLinkForm } from "@/components/pre-registration-link-form";
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 
@@ -15,11 +17,18 @@ export default async function AdminAgendaPage() {
   const pendingStatuses = [AppointmentRequestStatus.PENDING, AppointmentRequestStatus.PROPOSED];
   const requestWhere = user.role === "ADMIN" ? { status: { in: pendingStatuses } } : { therapistId: user.id, status: { in: pendingStatuses } };
   const appointmentWhere = user.role === "ADMIN" ? {} : { therapistId: user.id };
-  const [pending, confirmed, completed, profiles] = await Promise.all([
+  const [pending, confirmed, completed, profiles, clients, therapists, preRegistrations] = await Promise.all([
     prisma.appointmentRequest.findMany({ where: requestWhere, include: { client: true, therapist: true }, orderBy: { desiredStart: "asc" } }),
     prisma.appointment.findMany({ where: { ...appointmentWhere, status: AppointmentStatus.CONFIRMED }, include: { client: true, therapist: true }, orderBy: { startAt: "asc" } }),
     prisma.appointment.findMany({ where: { ...appointmentWhere, status: AppointmentStatus.COMPLETED }, include: { client: true, therapist: true }, orderBy: { startAt: "desc" } }),
     prisma.therapistProfile.findMany({ where: user.role === "ADMIN" ? undefined : { userId: user.id }, include: { user: true, availabilities: { orderBy: { weekday: "asc" } } } }),
+    prisma.user.findMany({ where: { role: "CLIENT" }, select: { id: true, name: true, email: true }, orderBy: { name: "asc" } }),
+    prisma.user.findMany({ where: user.role === "ADMIN" ? { role: { in: ["ADMIN", "THERAPIST"] } } : { id: user.id }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.preRegistration.findMany({
+      where: { linkedUserId: null, appointments: { some: user.role === "ADMIN" ? { linkedAppointmentId: null } : { therapistId: user.id, linkedAppointmentId: null } } },
+      include: { appointments: { where: user.role === "ADMIN" ? { linkedAppointmentId: null } : { therapistId: user.id, linkedAppointmentId: null }, include: { therapist: { select: { name: true } } }, orderBy: { startAt: "asc" } } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   return (
@@ -37,6 +46,26 @@ export default async function AdminAgendaPage() {
         <article className="data-card"><span>Consultas confirmadas</span><strong>{confirmed.length}</strong></article>
         <article className="data-card"><span>Consultas concluídas</span><strong>{completed.length}</strong></article>
       </div>
+
+      <section className="portal-panel">
+        <div className="panel-heading"><div><p className="eyebrow">Inserção manual</p><h2 className="display-font">Inserir na agenda</h2></div></div>
+        <AdminAppointmentForm clients={clients} therapists={therapists} />
+      </section>
+
+      <section className="portal-panel">
+        <div className="panel-heading"><div><p className="eyebrow">Pré-cadastros</p><h2 className="display-font">Vincular ao autocadastro</h2></div></div>
+        {preRegistrations.length ? <div className="pre-registration-list">{preRegistrations.map((registration) => (
+          <article className="pre-registration-card" key={registration.id}>
+            <div>
+              <strong>{registration.name}</strong>
+              <span>{[registration.email, registration.phone].filter(Boolean).join(" · ") || "Contato não informado"}</span>
+              {registration.note && <p>{registration.note}</p>}
+              {registration.appointments.map((appointment) => <small key={appointment.id}>{appointment.therapist.name} · {appointment.startAt.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</small>)}
+            </div>
+            <PreRegistrationLinkForm preRegistrationId={registration.id} clients={clients} />
+          </article>
+        ))}</div> : <div className="empty-state"><h3>Nenhum pré-cadastro pendente</h3><p>Horários criados sem cliente cadastrado aparecerão aqui para vínculo.</p></div>}
+      </section>
 
       <section className="portal-panel">
         <div className="panel-heading"><div><p className="eyebrow">Agenda</p><h2 className="display-font">Próximos atendimentos</h2></div></div>

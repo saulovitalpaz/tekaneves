@@ -18,18 +18,32 @@ test("homepage profile image is prioritized", () => {
 test("homepage mantém apenas o início sem chamada redundante de contato", async () => {
   const source = await readFile("components/home-entry.tsx", "utf8");
 
-  assert.equal(siteContent.home.eyebrow, "Psicoterapia para universitários");
-  assert.equal(siteContent.home.contactLabel, "Conhecer o acompanhamento");
+  assert.equal(siteContent.home.eyebrow, "Psicanalista");
+  assert.equal(siteContent.home.title, "Teka Neves");
+  assert.match(siteContent.home.description, /psicanalista/i);
   assert.match(source, /id="inicio"/);
   assert.doesNotMatch(source, /home-complement/);
   assert.doesNotMatch(source, /content\.portalLabel/);
+  assert.doesNotMatch(siteContent.footer, /desenvolvimento|mock|local/i);
 });
 
-test("homepage usa foto de perfil menor mesclada ao background clean verde", async () => {
+test("homepage integra o título à imagem profile", async () => {
+  const source = await readFile("components/home-entry.tsx", "utf8");
   const css = await readFile("app/globals.css", "utf8");
 
+  assert.match(source, /home-profile-title/);
+  assert.match(css, /\.home-profile-title/);
   assert.match(css, /\.home-entry-card\s*\{[^}]*radial-gradient/);
-  assert.match(css, /\.home-profile\s*\{[^}]*max-width: min\(42vw, 520px\)/);
-  assert.match(css, /\.home-profile::before/);
-  assert.match(css, /\.home-profile-image\s*\{[^}]*mix-blend-mode: multiply/);
+});
+
+test("homepage renders quote card from server data without public external fetch", async () => {
+  const [page, card] = await Promise.all([
+    readFile("app/page.tsx", "utf8"),
+    readFile("components/homepage-quote-card.tsx", "utf8"),
+  ]);
+
+  assert.match(page, /getHomepageQuoteCard/);
+  assert.match(page, /HomepageQuoteCard/);
+  assert.doesNotMatch(card, /useEffect|useState|fetch\(/);
+  assert.match(card, /homepage-quote-card/);
 });

@@ -85,7 +85,7 @@ button, input, textarea, select { font: inherit; }
   box-shadow: var(--card-shadow);
 }
 
-.home-entry-card, .contact-panel, .auth-card, .portal-panel, .data-card, .next-appointment, .quick-links a, .admin-request, .message-card, .homepage-inquiry-card, .dev-access, .client-history-note, .summary-card {
+.home-entry-card, .contact-panel, .auth-card, .portal-panel, .data-card, .next-appointment, .quick-links a, .admin-request, .message-card, .homepage-inquiry-card, .dev-access, .client-history-note, .summary-card, .pre-registration-card {
   border-color: rgb(22 72 63 / 0.12);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
@@ -116,6 +116,12 @@ button, input, textarea, select { font: inherit; }
 .home-profile { position: relative; justify-self: end; width: 100%; max-width: min(42vw, 520px); aspect-ratio: 0.9; overflow: hidden; border-radius: 48% 52% 44% 56% / 42% 38% 62% 58%; background: rgb(234 240 232 / 0.72); box-shadow: 0 24px 60px rgb(11 51 46 / 0.1); }
 .home-profile::before { content: ""; position: absolute; right: -18%; bottom: -10%; z-index: 0; width: 58%; aspect-ratio: 1; border-radius: 50%; background: rgb(229 174 96 / 0.22); }
 .home-profile-image { z-index: 1; object-fit: cover; object-position: center 16%; opacity: 0.88; filter: saturate(0.78) contrast(0.94); mix-blend-mode: multiply; }
+.home-profile-title { position: absolute; z-index: 2; left: 50%; bottom: 1rem; width: min(86%, 360px); margin: 0; transform: translateX(-50%); color: var(--white); font-size: clamp(2.1rem, 5vw, 4.3rem); line-height: 0.95; text-align: center; text-shadow: 0 3px 18px rgb(11 51 46 / 0.42); }
+.homepage-quote-section { padding: 0 0 clamp(2rem, 5vw, 4.5rem); }
+.homepage-quote-card { width: min(100%, 760px); margin: 0 auto; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); text-align: center; }
+.homepage-quote-card blockquote { margin: 0; }
+.homepage-quote-card blockquote p { margin: 0.75rem auto 0; color: var(--forest-deep); font-family: var(--font-display); font-size: clamp(1.65rem, 4vw, 2.75rem); line-height: 1.12; }
+.homepage-quote-card blockquote footer { margin-top: 1rem; color: var(--muted); font-size: 0.88rem; font-weight: 700; }
 
 .contact-section { padding: 2rem 0 4.5rem; }
 .contact-panel { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: clamp(2rem, 8vw, 7rem); padding: clamp(2rem, 5vw, 5rem); background: var(--gold-soft); }
@@ -189,6 +195,7 @@ button, input, textarea, select { font: inherit; }
 }
 
 .auth-page { display: grid; min-height: 100dvh; place-items: center; padding: 1rem; background: var(--paper); }
+.auth-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 510px)); align-items: start; justify-content: center; gap: 1rem; width: min(100%, 1060px); }
 
 .auth-card {
   width: min(100%, 510px);
@@ -199,7 +206,7 @@ button, input, textarea, select { font: inherit; }
   box-shadow: var(--card-shadow-raised);
 }
 
-.auth-card h1 { margin: 0.9rem 0 1rem; color: var(--forest-deep); font-size: clamp(2.8rem, 7vw, 4.8rem); line-height: 0.95; }
+.auth-card h1, .auth-card h2 { margin: 0.9rem 0 1rem; color: var(--forest-deep); font-size: clamp(2.8rem, 7vw, 4.8rem); line-height: 0.95; }
 .auth-copy { margin: 0 0 2rem; color: var(--muted); line-height: 1.7; }
 .auth-form { display: grid; gap: 1rem; }
 .auth-form label { display: grid; gap: 0.45rem; color: var(--forest-deep); font-size: 0.85rem; font-weight: 700; }
@@ -279,6 +286,23 @@ button, input, textarea, select { font: inherit; }
 .availability-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .availability-form { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .availability-form select, .availability-form input { min-height: 44px; border: 1px solid var(--line); border-radius: 0.75rem; background: var(--paper); color: var(--ink); padding: 0.65rem 0.75rem; }
+.admin-appointment-form, .pre-registration-link-form { display: grid; gap: 0.75rem; }
+.admin-appointment-form label, .pre-registration-link-form label { display: grid; gap: 0.4rem; color: var(--forest-deep); font-size: 0.84rem; font-weight: 700; }
+.admin-appointment-form input, .admin-appointment-form select, .admin-appointment-form textarea, .pre-registration-link-form select { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 0.8rem; background: var(--paper); color: var(--ink); padding: 0.78rem 0.85rem; }
+.admin-appointment-form textarea { min-height: 96px; resize: vertical; }
+.segmented-control { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.35rem; padding: 0.3rem; border: 1px solid var(--line); border-radius: 0.9rem; background: var(--paper); }
+.segmented-control button { min-height: 44px; border: 0; border-radius: 0.7rem; background: transparent; color: var(--muted); cursor: pointer; font-weight: 700; }
+.segmented-control button.active { background: var(--forest); color: var(--white); }
+.homepage-quote-settings-form { display: grid; gap: 0.85rem; max-width: 680px; }
+.homepage-quote-settings-form label { display: grid; gap: 0.45rem; color: var(--forest-deep); font-size: 0.85rem; font-weight: 700; }
+.homepage-quote-settings-form input:not([type="checkbox"]), .homepage-quote-settings-form textarea { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 0.8rem; background: var(--paper); color: var(--ink); padding: 0.85rem 0.9rem; }
+.homepage-quote-settings-form textarea { min-height: 110px; resize: vertical; }
+.toggle-field { display: flex !important; grid-template-columns: none; align-items: center; gap: 0.65rem !important; }
+.toggle-field input { width: 1.15rem; height: 1.15rem; accent-color: var(--forest); }
+.pre-registration-list { display: grid; gap: 0.75rem; }
+.pre-registration-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 0.55fr); gap: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--paper); }
+.pre-registration-card strong, .pre-registration-card span, .pre-registration-card small { display: block; }
+.pre-registration-card span, .pre-registration-card small, .pre-registration-card p { margin-top: 0.35rem; color: var(--muted); font-size: 0.83rem; line-height: 1.5; }
 .appointment-row { display: grid; gap: 0.75rem; padding: 0.95rem 0; border-bottom: 1px solid var(--line); }
 .appointment-row:last-child { border-bottom: 0; }
 .appointment-summary-form { display: grid; gap: 0.55rem; max-width: 760px; }
@@ -299,6 +323,13 @@ button, input, textarea, select { font: inherit; }
 .decision-button.confirm { background: #d9eee3; color: var(--forest); }
 .decision-button.propose { background: var(--gold-soft); color: var(--forest); }
 .decision-button.decline { background: #f3ded8; color: #8d3b2f; }
+.proposal-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; width: 100%; margin-top: 0.75rem; }
+.proposal-actions > span { color: var(--forest); font-size: 0.82rem; font-weight: 700; }
+.proposal-dialog-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 1rem; background: rgb(11 51 46 / 0.36); }
+.proposal-dialog { display: grid; gap: 0.8rem; width: min(100%, 440px); padding: 1rem; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow-raised); }
+.proposal-dialog h3 { margin: 0; color: var(--forest-deep); font-family: var(--font-display); font-size: 1.65rem; font-weight: 400; }
+.proposal-dialog textarea { min-height: 130px; resize: vertical; border: 1px solid var(--line); border-radius: 0.85rem; background: var(--paper); color: var(--ink); padding: 0.75rem; }
+.proposal-dialog > div { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: end; }
 .admin-request-list { display: grid; gap: 0.75rem; }
 .admin-request { display: flex; align-items: start; justify-content: space-between; gap: 1rem; padding: 1rem; border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--paper); }
 .admin-request > div:first-child { flex: 1; }
@@ -334,9 +365,11 @@ button, input, textarea, select { font: inherit; }
 .context-list span { padding: 0.45rem 0.7rem; border-radius: 999px; background: var(--paper-deep); color: var(--muted); font-size: 0.8rem; }
 
 @media (max-width: 900px) {
+  .auth-grid { grid-template-columns: 1fr; }
   .quick-links { grid-template-columns: 1fr; }
-  .admin-request { display: block; }
+  .admin-request, .pre-registration-card { display: block; }
   .decision-form { margin-top: 1.25rem; }
+  .pre-registration-link-form { margin-top: 1rem; }
 }
 
 @media (max-width: 760px) {
@@ -366,8 +399,8 @@ button, input, textarea, select { font: inherit; }
   .list-row { align-items: start; flex-wrap: wrap; gap: 0.65rem; }
   .list-row > svg { margin-top: 0.15rem; }
   .status-chip { margin: 0.2rem 0 0; }
-      .appointment-summary-form > div, .availability-actions, .decision-form > div, .summary-card-heading { display: grid; grid-template-columns: 1fr; }
-  .decision-button, .availability-form button, .appointment-summary-form button { width: 100%; }
+      .appointment-summary-form > div, .availability-actions, .decision-form > div, .summary-card-heading, .proposal-dialog > div { display: grid; grid-template-columns: 1fr; }
+  .decision-button, .availability-form button, .appointment-summary-form button, .proposal-dialog button { width: 100%; }
   .availability-form { display: grid; grid-template-columns: 1fr 1fr; }
   .availability-form select, .availability-form button, .availability-form .auth-error { grid-column: 1 / -1; }
   .empty-state { min-height: 140px; padding: 1rem 0; }

@@ -5,12 +5,14 @@ import { appointmentDecisionSchema } from "@/lib/validation";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user || !["ADMIN", "THERAPIST"].includes(user.role)) return apiError("FORBIDDEN", "Acesso administrativo necessário.", user ? 403 : 401);
+  if (!user || !["ADMIN", "THERAPIST", "CLIENT"].includes(user.role)) return apiError("FORBIDDEN", "Acesso necessário.", user ? 403 : 401);
   const { id } = await context.params;
   const parsed = appointmentDecisionSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Confira a decisão e o horário.", 400);
   const requestRecord = await prisma.appointmentRequest.findUnique({ where: { id }, include: { appointment: true } });
-  if (!requestRecord || (user.role === "THERAPIST" && requestRecord.therapistId !== user.id)) return apiError("NOT_FOUND", "Solicitação não encontrada.", 404);
+  if (!requestRecord || (user.role === "THERAPIST" && requestRecord.therapistId !== user.id) || (user.role === "CLIENT" && requestRecord.clientId !== user.id)) return apiError("NOT_FOUND", "Solicitação não encontrada.", 404);
+  if (user.role === "CLIENT" && requestRecord.status !== "PROPOSED") return apiError("FORBIDDEN", "Somente propostas pendentes podem ser respondidas pelo cliente.", 403);
+  if (user.role === "CLIENT" && parsed.data.status === "PROPOSED") return apiError("FORBIDDEN", "Cliente não pode propor novo horário por esta ação.", 403);
 
   if (parsed.data.status === "DECLINED") {
     const updated = await prisma.appointmentRequest.update({ where: { id }, data: { status: "DECLINED", adminNote: parsed.data.adminNote } });
