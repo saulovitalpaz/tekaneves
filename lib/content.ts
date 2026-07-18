@@ -23,11 +23,6 @@ export const siteContent = {
     title: "Cuidar de si também pode ser uma forma de seguir em frente.",
     description:
       "A psicoterapia oferece tempo e espaço para olhar para a sua história com mais gentileza, clareza e curiosidade.",
-    areas: [
-      { title: "Ansiedade", text: "Para quando os pensamentos aceleram e o presente parece difícil de alcançar." },
-      { title: "Exaustão", text: "Para reconhecer limites, recuperar energia e fazer espaço para você." },
-      { title: "Relacionamentos", text: "Para compreender vínculos, necessidades e formas mais honestas de se relacionar." },
-    ],
   },
   audience: {
     eyebrow: "Para quem é",
@@ -42,6 +37,8 @@ export const siteContent = {
       "Meu trabalho parte da construção de um espaço seguro, onde sua experiência possa ser acolhida sem pressa e sem julgamentos.",
       "A terapia é um processo singular. Juntos, podemos compreender padrões, nomear sentimentos e encontrar novas possibilidades para a sua vida.",
     ],
+    ctaLabel: "Vamos conversar",
+    ctaHref: "#contato",
     imageAlt: "Retrato de Teka Neves usando uma camisa azul e óculos claros.",
   },
   contact: {

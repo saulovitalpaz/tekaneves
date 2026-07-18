@@ -5,6 +5,8 @@ type AboutSectionProps = {
     eyebrow: string;
     title: string;
     paragraphs: readonly string[];
+    ctaLabel: string;
+    ctaHref: string;
     imageAlt: string;
   };
 };
@@ -16,8 +18,9 @@ export function AboutSection({ content }: AboutSectionProps) {
         <div className="about-photo-wrap"><div className="about-photo"><Image src="/images/profile.jpeg" alt={content.imageAlt} fill sizes="(max-width: 860px) 80vw, 430px" /></div></div>
         <div className="about-copy">
           <p className="eyebrow">{content.eyebrow}</p>
-          <h2 id="about-title" className="display-font section-heading">{content.title}</h2>
+          <h1 id="about-title" className="display-font section-heading">{content.title}</h1>
           {content.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+          <a className="button-primary" href={content.ctaHref}>{content.ctaLabel}<span aria-hidden="true">↗</span></a>
         </div>
       </div>
     </section>
