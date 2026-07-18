@@ -53,6 +53,6 @@ O contato é assíncrono e orientado ao agendamento. Não há websocket, videoch
 - `app/page.tsx`: composição da homepage pública.
 - `components/`: blocos visuais e formulário local.
 - `lib/content.ts`: conteúdo editável da homepage.
-- `lib/daily-phrases.ts`: fonte local temporária das frases rotativas. No futuro, pode ser substituída por uma API protegida pelo painel admin.
+- `lib/daily-phrases.ts`: módulo legado/dormente de frases rotativas, não composto na homepage atual.
 - `public/images/profile.jpeg`: retrato utilizado na página.
 - Futuras áreas de paciente podem ser adicionadas em grupos de rotas para login, dashboard, agendamento e histórico, sem misturar regras autenticadas com a homepage.

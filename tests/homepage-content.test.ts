@@ -14,6 +14,7 @@ test("homepage entry uses the approved about copy and contact CTA", () => {
   assert.equal(siteContent.about.title, "Escuta atenta, cuidado e respeito pelo seu tempo.");
   assert.equal(siteContent.about.paragraphs.length, 2);
   assert.equal(siteContent.about.ctaHref, "#contato");
+  assert.equal(siteContent.about.imagePriority, true);
 });
 
 test("support content no longer defines a homepage card grid", () => {

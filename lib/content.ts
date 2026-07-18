@@ -40,6 +40,7 @@ export const siteContent = {
     ctaLabel: "Vamos conversar",
     ctaHref: "#contato",
     imageAlt: "Retrato de Teka Neves usando uma camisa azul e óculos claros.",
+    imagePriority: true,
   },
   contact: {
     eyebrow: "Contato",
