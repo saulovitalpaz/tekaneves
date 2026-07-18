@@ -27,6 +27,12 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+enum HomepageInquirySource {
+  FLUTUANTE
+  CONTATO_INTERNO
+  WHATSAPP
+}
+
 model User {
   id                  String               @id @default(cuid())
   name                String
@@ -141,4 +147,18 @@ model ContactMessage {
   @@index([senderId, createdAt])
   @@index([appointmentRequestId, createdAt])
   @@index([appointmentId, createdAt])
+}
+
+model HomepageInquiry {
+  id        String                @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  source    HomepageInquirySource
+  readAt    DateTime?
+  createdAt DateTime              @default(now())
+
+  @@index([readAt, createdAt])
+  @@index([source, createdAt])
 }

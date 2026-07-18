@@ -42,5 +42,13 @@ export const contactMessageSchema = z.object({
   body: z.string().trim().min(1).max(2000),
 });
 
+export const homepageInquirySchema = z.object({
+  name: z.string().trim().min(2, "Informe seu nome").max(120),
+  email,
+  subject: z.string().trim().min(1).max(120).optional(),
+  message: z.string().trim().min(1, "Escreva uma mensagem breve").max(2000),
+  source: z.enum(["FLUTUANTE", "CONTATO_INTERNO", "WHATSAPP"]),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
