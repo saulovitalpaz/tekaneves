@@ -12,14 +12,24 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({ email, password: z.string().min(1, "Informe sua senha") });
 
-export const availabilitySchema = z.object({
-  therapistId: z.string().cuid(),
+const availabilityFieldsSchema = z.object({
   weekday: z.number().int().min(0).max(6),
   startMinutes: z.number().int().min(0).max(1439),
   endMinutes: z.number().int().min(1).max(1440),
   timezone: z.string().min(1).default("America/Sao_Paulo"),
   isActive: z.boolean().default(true),
-}).refine((value) => value.endMinutes > value.startMinutes, { message: "O fim deve ser depois do início", path: ["endMinutes"] });
+});
+
+function hasValidAvailabilityRange(value: { startMinutes: number; endMinutes: number }) {
+  return value.endMinutes > value.startMinutes;
+}
+
+export const availabilitySchema = availabilityFieldsSchema
+  .extend({ therapistId: z.string().cuid() })
+  .refine(hasValidAvailabilityRange, { message: "O fim deve ser depois do início", path: ["endMinutes"] });
+
+export const availabilityUpdateSchema = availabilityFieldsSchema
+  .refine(hasValidAvailabilityRange, { message: "O fim deve ser depois do início", path: ["endMinutes"] });
 
 export const appointmentRequestSchema = z.object({
   therapistId: z.string().cuid(),
