@@ -61,7 +61,7 @@ async function main() {
       where: { id: existingQuoteSettings.id },
       data: {
         manualQuoteText: "A escuta cuidadosa ajuda a abrir novos caminhos.",
-        manualQuoteAuthor: "Teka Neves",
+        manualQuoteAuthor: "Marilene Neves da Paz Lima",
       },
     });
   } else {
@@ -70,7 +70,7 @@ async function main() {
         isQuoteCardVisible: false,
         isAutoGenerateActive: false,
         manualQuoteText: "A escuta cuidadosa ajuda a abrir novos caminhos.",
-        manualQuoteAuthor: "Teka Neves",
+        manualQuoteAuthor: "Marilene Neves da Paz Lima",
       },
     });
   }

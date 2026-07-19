@@ -1,6 +1,7 @@
 import { apiData, apiError } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { ensureTherapistSlotIsBookable, isSlotErrorCode, slotErrorMessage } from "@/lib/scheduling";
 import { appointmentRequestSchema } from "@/lib/validation";
 
 export async function GET() {
@@ -20,9 +21,13 @@ export async function POST(request: Request) {
 
   const therapist = await prisma.user.findFirst({ where: { id: parsed.data.therapistId, role: "THERAPIST" } });
   if (!therapist) return apiError("THERAPIST_NOT_FOUND", "Terapeuta não encontrado.", 404);
-  const end = new Date(parsed.data.desiredStart.getTime() + parsed.data.durationMinutes * 60 * 1000);
-  const conflict = await prisma.appointment.findFirst({ where: { therapistId: therapist.id, status: "CONFIRMED", startAt: { lt: end }, endAt: { gt: parsed.data.desiredStart } } });
-  if (conflict) return apiError("SLOT_UNAVAILABLE", "Esse horário já está ocupado. Escolha outro.", 409);
+  try {
+    await ensureTherapistSlotIsBookable({ therapistId: therapist.id, startAt: parsed.data.desiredStart, durationMinutes: parsed.data.durationMinutes });
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "SLOT_UNAVAILABLE";
+    if (isSlotErrorCode(code)) return apiError(code, slotErrorMessage(code), 409);
+    throw error;
+  }
 
   const created = await prisma.appointmentRequest.create({ data: { clientId: user.id, therapistId: therapist.id, desiredStart: parsed.data.desiredStart, durationMinutes: parsed.data.durationMinutes, message: parsed.data.message } });
   return apiData({ id: created.id, status: created.status }, 201);

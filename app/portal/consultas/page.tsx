@@ -8,7 +8,7 @@ const statusLabels: Record<string, string> = { PENDING: "Aguardando retorno", CO
 
 export default async function ConsultationsPage() {
   const user = await requireUser();
-  const requests = await prisma.appointmentRequest.findMany({ where: { clientId: user.id }, include: { therapist: true, appointment: true }, orderBy: { desiredStart: "desc" } });
+  const requests = await prisma.appointmentRequest.findMany({ where: { clientId: user.id }, include: { therapist: true, appointment: { include: { summary: true } } }, orderBy: { desiredStart: "desc" } });
 
   return (
     <div>
@@ -24,18 +24,28 @@ export default async function ConsultationsPage() {
           <div className="portal-list">
             {requests.map((request) => {
               const visibleStatus = request.appointment?.status ?? request.status;
+              const note = request.appointment?.summary?.clientNote;
+              
               return (
-                <article className="list-row" key={request.id}>
-                  <CalendarDays size={22} />
-                  <div>
-                    <strong>{request.therapist.name}</strong>
-                    <span>{(request.proposedStart ?? request.desiredStart).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</span>
-                  </div>
-                  <span className={`status-chip ${visibleStatus.toLowerCase()}`}>{statusLabels[visibleStatus]}</span>
-                  {request.status === "PROPOSED" && request.proposedStart && (
-                    <AppointmentProposalActions requestId={request.id} therapistId={request.therapistId} proposedStart={request.proposedStart} />
+                <div key={request.id} style={{ display: "flex", flexDirection: "column", borderBottom: "1px solid var(--line)" }}>
+                  <article className="list-row" style={{ borderBottom: 0 }}>
+                    <CalendarDays size={22} />
+                    <div>
+                      <strong>{request.therapist.name}</strong>
+                      <span>{(request.proposedStart ?? request.desiredStart).toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</span>
+                    </div>
+                    <span className={`status-chip ${visibleStatus.toLowerCase()}`}>{statusLabels[visibleStatus]}</span>
+                    {request.status === "PROPOSED" && request.proposedStart && (
+                      <AppointmentProposalActions requestId={request.id} therapistId={request.therapistId} proposedStart={request.proposedStart} />
+                    )}
+                  </article>
+                  {note && (
+                    <div style={{ margin: "0 1rem 1rem", padding: "1rem", backgroundColor: "var(--paper-deep)", borderRadius: "var(--card-radius)", fontSize: "0.9rem" }}>
+                      <strong>Nota da terapeuta:</strong>
+                      <p style={{ marginTop: "0.5rem", marginBottom: 0, whiteSpace: "pre-wrap" }}>{note}</p>
+                    </div>
                   )}
-                </article>
+                </div>
               );
             })}
           </div>

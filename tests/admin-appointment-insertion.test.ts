@@ -15,6 +15,27 @@ async function loadAdminAppointmentHelpers() {
   return import("@/lib/admin-appointments");
 }
 
+async function createOpenAvailability(therapistId: string) {
+  await prisma.therapistProfile.create({
+    data: {
+      userId: therapistId,
+      specialty: "Teste",
+      availabilities: {
+        createMany: {
+          data: [
+            { weekday: 1, startMinutes: 0, endMinutes: 1440 },
+            { weekday: 2, startMinutes: 0, endMinutes: 1440 },
+            { weekday: 3, startMinutes: 0, endMinutes: 1440 },
+            { weekday: 4, startMinutes: 0, endMinutes: 1440 },
+            { weekday: 5, startMinutes: 0, endMinutes: 1440 },
+            { weekday: 6, startMinutes: 0, endMinutes: 1440 },
+          ],
+        },
+      },
+    },
+  });
+}
+
 test("admin insere consulta real para cliente cadastrado", async () => {
   const { createRegisteredAppointment } = await loadAdminAppointmentHelpers();
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -25,6 +46,8 @@ test("admin insere consulta real para cliente cadastrado", async () => {
   ]);
 
   try {
+    await createOpenAvailability(therapist.id);
+
     const appointment = await createRegisteredAppointment({
       createdById: admin.id,
       clientId: client.id,
@@ -57,6 +80,8 @@ test("pré-cadastro é vinculado depois ao usuário correto e cria consulta real
   ]);
 
   try {
+    await createOpenAvailability(therapist.id);
+
     const draft = await createPreRegisteredAppointment({
       createdById: admin.id,
       therapistId: therapist.id,

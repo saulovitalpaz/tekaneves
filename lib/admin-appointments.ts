@@ -1,6 +1,5 @@
-import { AppointmentStatus } from "@prisma/client";
-
 import { prisma } from "@/lib/db";
+import { appointmentEnd, ensureTherapistSlotIsBookable } from "@/lib/scheduling";
 
 type RegisteredAppointmentInput = {
   createdById: string;
@@ -28,10 +27,6 @@ type LinkPreRegistrationInput = {
   linkedById: string;
 };
 
-function appointmentEnd(startAt: Date, durationMinutes: number) {
-  return new Date(startAt.getTime() + durationMinutes * 60 * 1000);
-}
-
 async function assertClient(clientId: string) {
   const client = await prisma.user.findFirst({ where: { id: clientId, role: "CLIENT" } });
   if (!client) throw new Error("CLIENT_NOT_FOUND");
@@ -44,21 +39,9 @@ async function assertTherapist(therapistId: string) {
   return therapist;
 }
 
-async function assertSlotAvailable(therapistId: string, startAt: Date, endAt: Date) {
-  const conflict = await prisma.appointment.findFirst({
-    where: {
-      therapistId,
-      status: AppointmentStatus.CONFIRMED,
-      startAt: { lt: endAt },
-      endAt: { gt: startAt },
-    },
-  });
-  if (conflict) throw new Error("SLOT_UNAVAILABLE");
-}
-
 export async function createRegisteredAppointment(input: RegisteredAppointmentInput) {
-  const endAt = appointmentEnd(input.startAt, input.durationMinutes);
-  await Promise.all([assertClient(input.clientId), assertTherapist(input.therapistId), assertSlotAvailable(input.therapistId, input.startAt, endAt)]);
+  await Promise.all([assertClient(input.clientId), assertTherapist(input.therapistId)]);
+  const { endAt } = await ensureTherapistSlotIsBookable(input);
 
   return prisma.$transaction(async (tx) => {
     const request = await tx.appointmentRequest.create({
@@ -87,8 +70,8 @@ export async function createRegisteredAppointment(input: RegisteredAppointmentIn
 }
 
 export async function createPreRegisteredAppointment(input: PreRegisteredAppointmentInput) {
-  const endAt = appointmentEnd(input.startAt, input.durationMinutes);
-  await Promise.all([assertTherapist(input.therapistId), assertSlotAvailable(input.therapistId, input.startAt, endAt)]);
+  await assertTherapist(input.therapistId);
+  const { endAt } = await ensureTherapistSlotIsBookable(input);
 
   return prisma.$transaction(async (tx) => {
     const preRegistration = await tx.preRegistration.create({
@@ -122,6 +105,7 @@ export async function linkPreRegistrationToClient(input: LinkPreRegistrationInpu
     include: { appointments: { where: { linkedAppointmentId: null }, orderBy: { startAt: "asc" } } },
   });
   if (!preRegistration) throw new Error("PRE_REGISTRATION_NOT_FOUND");
+  if (preRegistration.rejectedAt) throw new Error("PRE_REGISTRATION_REJECTED");
 
   return prisma.$transaction(async (tx) => {
     await tx.preRegistration.update({

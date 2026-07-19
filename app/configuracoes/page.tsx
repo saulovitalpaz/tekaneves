@@ -14,7 +14,7 @@ export default async function AccountSettingsPage() {
       <header className="portal-topbar">
         <Link className="portal-brand" href={homePath}>
           <span className="portal-mark">TN</span>
-          <span><strong>Teka Neves</strong><small>Configurações da conta</small></span>
+          <span><strong>Marilene Neves da Paz Lima</strong></span>
         </Link>
         <div className="portal-actions">
           <span>{user.name}</span>

@@ -8,10 +8,10 @@ export function isSummaryEligible(status: AppointmentStatus) {
   return SUMMARY_ELIGIBLE_STATUSES.includes(status as (typeof SUMMARY_ELIGIBLE_STATUSES)[number]);
 }
 
-export async function upsertAppointmentSummary(input: { appointmentId: string; authorId: string; body: string }) {
+export async function upsertAppointmentSummary(input: { appointmentId: string; authorId: string; body: string; clientNote?: string | null }) {
   return prisma.appointmentSummary.upsert({
     where: { appointmentId: input.appointmentId },
     create: input,
-    update: { body: input.body },
+    update: { body: input.body, clientNote: input.clientNote },
   });
 }

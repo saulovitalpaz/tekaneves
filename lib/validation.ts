@@ -55,6 +55,7 @@ export const appointmentDecisionSchema = z.object({
 
 export const appointmentSummaryBodySchema = z.object({
   body: z.string().trim().min(1, "Escreva um resumo breve").max(4000, "O resumo deve ter até 4000 caracteres"),
+  clientNote: z.string().trim().max(4000).optional(),
 });
 
 export const appointmentStatusUpdateSchema = z.object({

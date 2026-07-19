@@ -1,6 +1,7 @@
 import { apiData, apiError } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { ensureTherapistSlotIsBookable, isSlotErrorCode, slotErrorMessage } from "@/lib/scheduling";
 import { appointmentDecisionSchema } from "@/lib/validation";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -20,14 +21,25 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
 
   const start = parsed.data.confirmedStart ?? requestRecord.proposedStart ?? requestRecord.desiredStart;
+  let end = new Date(start.getTime() + requestRecord.durationMinutes * 60 * 1000);
+  try {
+    const slot = await ensureTherapistSlotIsBookable({
+      therapistId: requestRecord.therapistId,
+      startAt: start,
+      durationMinutes: requestRecord.durationMinutes,
+      excludeAppointmentId: requestRecord.appointment?.id,
+    });
+    end = slot.endAt;
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "SLOT_UNAVAILABLE";
+    if (isSlotErrorCode(code)) return apiError(code, slotErrorMessage(code), 409);
+    throw error;
+  }
+
   if (parsed.data.status === "PROPOSED") {
     const updated = await prisma.appointmentRequest.update({ where: { id }, data: { status: "PROPOSED", proposedStart: start, adminNote: parsed.data.adminNote } });
     return apiData({ id: updated.id, status: updated.status });
   }
-
-  const end = new Date(start.getTime() + requestRecord.durationMinutes * 60 * 1000);
-  const conflict = await prisma.appointment.findFirst({ where: { therapistId: requestRecord.therapistId, status: "CONFIRMED", startAt: { lt: end }, endAt: { gt: start }, NOT: { id: requestRecord.appointment?.id } } });
-  if (conflict) return apiError("SLOT_UNAVAILABLE", "Esse horário já está ocupado.", 409);
 
   const appointment = await prisma.$transaction(async (tx) => {
     await tx.appointmentRequest.update({ where: { id }, data: { status: "CONFIRMED", proposedStart: null, adminNote: parsed.data.adminNote } });

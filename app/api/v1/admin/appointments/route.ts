@@ -1,6 +1,7 @@
 import { apiData, apiError } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createPreRegisteredAppointment, createRegisteredAppointment } from "@/lib/admin-appointments";
+import { isSlotErrorCode, slotErrorMessage } from "@/lib/scheduling";
 import { adminAppointmentCreateSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     return apiData({ id: result.id }, 201);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível inserir o horário.";
-    const status = message === "SLOT_UNAVAILABLE" ? 409 : 400;
-    return apiError(message, message, status);
+    const isSlotError = isSlotErrorCode(message);
+    return apiError(message, isSlotError ? slotErrorMessage(message) : message, isSlotError ? 409 : 400);
   }
 }

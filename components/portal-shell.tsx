@@ -10,7 +10,7 @@ export function PortalShell({ user, children }: { user: SafeUser; children: Reac
       <header className="portal-topbar">
         <Link className="portal-brand" href="/portal">
           <span className="portal-mark">TN</span>
-          <span><strong>Teka Neves</strong><small>Área do paciente</small></span>
+          <span><strong>Marilene Neves da Paz Lima</strong></span>
         </Link>
         <nav className="portal-nav" aria-label="Área do paciente">
           <Link href="/portal"><LayoutDashboard size={16} />Resumo</Link>

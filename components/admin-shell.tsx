@@ -10,12 +10,12 @@ export function AdminShell({ user, children }: { user: SafeUser; children: React
       <header className="portal-topbar">
         <Link className="portal-brand" href="/admin">
           <span className="portal-mark">TN</span>
-          <span><strong>Teka Neves</strong><small>Gestão de atendimentos</small></span>
+          <span><strong>Marilene Neves da Paz Lima</strong></span>
         </Link>
         <nav className="portal-nav" aria-label="Administração">
-          <Link href="/admin"><LayoutDashboard size={16} />Resumo</Link>
+          <Link href="/admin"><LayoutDashboard size={16} />Dashboard</Link>
           <Link href="/admin/agenda"><CalendarDays size={16} />Agenda</Link>
-          <Link href="/admin/resumos"><ClipboardList size={16} />Resumos</Link>
+          <Link href="/admin/resumos"><ClipboardList size={16} />Consulta</Link>
           <Link href="/admin/clientes"><Users size={16} />Clientes</Link>
           <Link href="/admin/mensagens"><MessageCircle size={16} />Mensagens</Link>
           <Link href="/configuracoes"><Settings size={16} />Configurações</Link>

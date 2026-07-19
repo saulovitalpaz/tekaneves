@@ -7,7 +7,7 @@ const messageRelations = {
 
 export async function listInternalInbox(recipientId: string) {
   return prisma.contactMessage.findMany({
-    where: { recipientId },
+    where: { OR: [{ senderId: recipientId }, { recipientId }] },
     include: messageRelations,
     orderBy: { createdAt: "desc" },
   });
@@ -15,7 +15,12 @@ export async function listInternalInbox(recipientId: string) {
 
 export async function listTekaAdminInbox() {
   return prisma.contactMessage.findMany({
-    where: { recipient: { role: "THERAPIST" } },
+    where: {
+      OR: [
+        { sender: { role: { in: ["ADMIN", "THERAPIST"] } } },
+        { recipient: { role: { in: ["ADMIN", "THERAPIST"] } } },
+      ],
+    },
     include: messageRelations,
     orderBy: { createdAt: "desc" },
   });

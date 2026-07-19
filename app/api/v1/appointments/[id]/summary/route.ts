@@ -30,6 +30,6 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   const appointment = await findManagedAppointment(user, id);
   if (!appointment) return apiError("FORBIDDEN", "Você não pode alterar este resumo.", 403);
   if (!isSummaryEligible(appointment.status)) return apiError("SUMMARY_UNAVAILABLE", "Esta consulta não aceita resumo.", 409);
-  const summary = await upsertAppointmentSummary({ appointmentId: appointment.id, authorId: user.id, body: parsed.data.body });
+  const summary = await upsertAppointmentSummary({ appointmentId: appointment.id, authorId: user.id, body: parsed.data.body, clientNote: parsed.data.clientNote });
   return apiData({ summary });
 }

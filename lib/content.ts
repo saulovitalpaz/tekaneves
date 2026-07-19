@@ -1,6 +1,6 @@
 export const siteContent = {
   brand: {
-    name: "Teka Neves",
+    name: "Marilene Neves da Paz Lima",
     descriptor: "Psicanalista",
   },
   navigation: [
@@ -9,10 +9,10 @@ export const siteContent = {
   ],
   home: {
     eyebrow: "Psicanalista",
-    title: "Teka Neves",
-    description: "Teka Neves, psicanalista. Um espaço para escutar o que pede atenção.",
+    title: "Marilene Neves da Paz Lima",
+    description: "Marilene Neves da Paz Lima, psicanalista. Um espaço para escutar o que pede atenção.",
     contactLabel: "Entrar em contato",
-    imageAlt: "Retrato de Teka Neves usando uma camisa azul e óculos claros.",
+    imageAlt: "Retrato de Marilene Neves da Paz Lima usando uma camisa azul e óculos claros.",
     imagePriority: true,
   },
   footer: "Atendimento em psicanálise com escuta cuidadosa e contato reservado.",

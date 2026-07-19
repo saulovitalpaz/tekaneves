@@ -5,6 +5,7 @@ import { AppointmentDecisionForm } from "@/components/appointment-decision-form"
 import { AvailabilityForm } from "@/components/availability-form";
 import { AvailabilityList } from "@/components/availability-list";
 import { PreRegistrationLinkForm } from "@/components/pre-registration-link-form";
+import { PreRegistrationRejectButton } from "@/components/pre-registration-reject-button";
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 
@@ -17,15 +18,14 @@ export default async function AdminAgendaPage() {
   const pendingStatuses = [AppointmentRequestStatus.PENDING, AppointmentRequestStatus.PROPOSED];
   const requestWhere = user.role === "ADMIN" ? { status: { in: pendingStatuses } } : { therapistId: user.id, status: { in: pendingStatuses } };
   const appointmentWhere = user.role === "ADMIN" ? {} : { therapistId: user.id };
-  const [pending, confirmed, completed, profiles, clients, therapists, preRegistrations] = await Promise.all([
+  const [pending, confirmed, profiles, clients, therapists, preRegistrations] = await Promise.all([
     prisma.appointmentRequest.findMany({ where: requestWhere, include: { client: true, therapist: true }, orderBy: { desiredStart: "asc" } }),
     prisma.appointment.findMany({ where: { ...appointmentWhere, status: AppointmentStatus.CONFIRMED }, include: { client: true, therapist: true }, orderBy: { startAt: "asc" } }),
-    prisma.appointment.findMany({ where: { ...appointmentWhere, status: AppointmentStatus.COMPLETED }, include: { client: true, therapist: true }, orderBy: { startAt: "desc" } }),
     prisma.therapistProfile.findMany({ where: user.role === "ADMIN" ? undefined : { userId: user.id }, include: { user: true, availabilities: { orderBy: { weekday: "asc" } } } }),
     prisma.user.findMany({ where: { role: "CLIENT" }, select: { id: true, name: true, email: true }, orderBy: { name: "asc" } }),
     prisma.user.findMany({ where: user.role === "ADMIN" ? { role: { in: ["ADMIN", "THERAPIST"] } } : { id: user.id }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     prisma.preRegistration.findMany({
-      where: { linkedUserId: null, appointments: { some: user.role === "ADMIN" ? { linkedAppointmentId: null } : { therapistId: user.id, linkedAppointmentId: null } } },
+      where: { linkedUserId: null, rejectedAt: null, appointments: { some: user.role === "ADMIN" ? { linkedAppointmentId: null } : { therapistId: user.id, linkedAppointmentId: null } } },
       include: { appointments: { where: user.role === "ADMIN" ? { linkedAppointmentId: null } : { therapistId: user.id, linkedAppointmentId: null }, include: { therapist: { select: { name: true } } }, orderBy: { startAt: "asc" } } },
       orderBy: { createdAt: "desc" },
     }),
@@ -37,14 +37,14 @@ export default async function AdminAgendaPage() {
         <div>
           <p className="eyebrow">Agenda</p>
           <h1 className="display-font">Horários com cuidado.</h1>
-          <p>Configure disponibilidade, acompanhe próximos atendimentos, solicitações e histórico.</p>
+          <p>Acompanhe próximos atendimentos, solicitações e pré-cadastros pendentes.</p>
         </div>
       </div>
 
-      <div className="dashboard-grid">
+      <div className="dashboard-grid compact-dashboard">
         <article className="data-card"><span>Solicitações pendentes</span><strong>{pending.length}</strong></article>
         <article className="data-card"><span>Consultas confirmadas</span><strong>{confirmed.length}</strong></article>
-        <article className="data-card"><span>Consultas concluídas</span><strong>{completed.length}</strong></article>
+        <article className="data-card"><span>Pré-cadastros</span><strong>{preRegistrations.length}</strong></article>
       </div>
 
       <section className="portal-panel">
@@ -62,7 +62,10 @@ export default async function AdminAgendaPage() {
               {registration.note && <p>{registration.note}</p>}
               {registration.appointments.map((appointment) => <small key={appointment.id}>{appointment.therapist.name} · {appointment.startAt.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</small>)}
             </div>
-            <PreRegistrationLinkForm preRegistrationId={registration.id} clients={clients} />
+            <div className="pre-registration-actions">
+              <PreRegistrationLinkForm preRegistrationId={registration.id} clients={clients} />
+              <PreRegistrationRejectButton preRegistrationId={registration.id} />
+            </div>
           </article>
         ))}</div> : <div className="empty-state"><h3>Nenhum pré-cadastro pendente</h3><p>Horários criados sem cliente cadastrado aparecerão aqui para vínculo.</p></div>}
       </section>
@@ -93,20 +96,8 @@ export default async function AdminAgendaPage() {
         ))}</div> : <div className="empty-state"><h3>Nenhuma solicitação pendente</h3><p>Quando um cliente pedir um horário, ele aparecerá aqui.</p></div>}
       </section>
 
-      <section className="portal-panel">
-        <div className="panel-heading"><div><p className="eyebrow">Histórico</p><h2 className="display-font">Atendimentos concluídos</h2></div></div>
-        {completed.length ? completed.map((appointment) => (
-          <article className="appointment-row" key={appointment.id}>
-            <div>
-              <strong>{appointment.client.name}</strong>
-              <span>{appointment.therapist.name} · {appointment.startAt.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })} · {durationMinutes(appointment.startAt, appointment.endAt)} min</span>
-            </div>
-          </article>
-        )) : <div className="empty-state"><h3>Nenhum atendimento concluído</h3><p>O histórico aparecerá aqui após concluir uma consulta.</p></div>}
-      </section>
-
-      <section className="portal-panel">
-        <div className="panel-heading"><div><p className="eyebrow">Disponibilidades</p><h2 className="display-font">Janelas de atendimento</h2></div></div>
+      <details className="portal-panel collapsible-panel">
+        <summary><span>Disponibilidades</span><strong>Janelas de atendimento</strong></summary>
         {profiles.map((profile) => (
           <div className="availability-block" key={profile.id}>
             <strong>{profile.user.name}</strong>
@@ -114,7 +105,7 @@ export default async function AdminAgendaPage() {
             <AvailabilityForm therapistId={profile.userId} />
           </div>
         ))}
-      </section>
+      </details>
     </div>
   );
 }
