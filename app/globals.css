@@ -113,10 +113,10 @@ button, input, textarea, select { font: inherit; }
 .home-entry-title { max-width: 690px; margin: 1rem 0 1rem; color: var(--forest-deep); font-size: clamp(3rem, 5.4vw, 5.9rem); line-height: 0.96; }
 .home-entry-description { max-width: 520px; margin: 0; color: var(--ink); font-size: 1.08rem; line-height: 1.7; }
 .home-entry-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
-.home-profile-wrapper { display: flex; flex-direction: column; gap: 1rem; justify-self: end; width: 100%; max-width: min(42vw, 520px); }
-.home-profile { position: relative; width: 100%; aspect-ratio: 0.85; overflow: hidden; border-radius: 1.5rem; background: var(--surface); box-shadow: 0 24px 60px rgb(11 51 46 / 0.15); }
-.home-profile-image { z-index: 1; object-fit: cover; object-position: center 16%; }
-.home-profile-caption { font-size: 0.85rem; color: var(--muted); line-height: 1.5; padding: 0 0.5rem; }
+.home-profile-wrapper { display: flex; flex-direction: column; gap: 1rem; justify-self: end; width: 100%; max-width: min(55vw, 680px); position: relative; }
+.home-profile { position: relative; width: 100%; aspect-ratio: 1; }
+.home-profile-image { z-index: 1; object-fit: contain; object-position: center; }
+.home-profile-caption { align-self: flex-end; text-align: right; font-size: 0.85rem; color: var(--muted); line-height: 1.5; max-width: 400px; }
 .home-profile-caption strong { display: block; color: var(--forest-deep); font-size: 0.95rem; margin-bottom: 0.25rem; }
 .homepage-quote-section { padding: 0 0 clamp(2rem, 5vw, 4.5rem); }
 .homepage-quote-card { width: min(100%, 760px); margin: 0 auto; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); text-align: center; }
@@ -165,7 +165,7 @@ button, input, textarea, select { font: inherit; }
 @media (max-width: 860px) {
   .home-entry-card, .contact-panel { grid-template-columns: 1fr; }
   .home-entry-card { min-height: 0; }
-  .home-profile-wrapper { justify-self: center; width: min(74vw, 390px); max-width: min(74vw, 390px); order: -1; }
+  .home-profile-wrapper { justify-self: center; width: min(74vw, 390px); max-width: min(74vw, 390px); }
   .contact-panel { gap: 2.5rem; }
 }
 

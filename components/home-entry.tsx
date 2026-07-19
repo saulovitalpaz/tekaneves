@@ -21,10 +21,6 @@ export function HomeEntry({ content }: HomeEntryProps) {
         <div className="home-entry-copy">
           <p className="eyebrow">{content.eyebrow}</p>
           <h1 id="home-entry-title" className="display-font home-entry-title">{content.title}</h1>
-          <p className="home-entry-description">{content.description}</p>
-          <div className="home-entry-actions">
-            <Link className="button-primary" href="/contato">{content.contactLabel}<span aria-hidden="true">→</span></Link>
-          </div>
         </div>
         <div className="home-profile-wrapper">
           <div className="home-profile">
