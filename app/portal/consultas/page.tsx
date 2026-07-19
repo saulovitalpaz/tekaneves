@@ -8,7 +8,19 @@ const statusLabels: Record<string, string> = { PENDING: "Aguardando retorno", CO
 
 export default async function ConsultationsPage() {
   const user = await requireUser();
-  const requests = await prisma.appointmentRequest.findMany({ where: { clientId: user.id }, include: { therapist: true, appointment: { include: { summary: true } } }, orderBy: { desiredStart: "desc" } });
+  const requests = await prisma.appointmentRequest.findMany({
+    where: { clientId: user.id },
+    select: {
+      id: true,
+      therapistId: true,
+      desiredStart: true,
+      proposedStart: true,
+      status: true,
+      therapist: { select: { name: true } },
+      appointment: { select: { status: true, summary: { select: { clientNote: true } } } },
+    },
+    orderBy: { desiredStart: "desc" },
+  });
 
   return (
     <div>

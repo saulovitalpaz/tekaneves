@@ -28,13 +28,17 @@ test("homepage quote settings validation rejects empty manual fallback content",
 });
 
 test("schema declares homepage quote settings separately from inquiry data", async () => {
-  const schema = await readFile("prisma/schema.prisma", "utf8");
+  const [schema, migration] = await Promise.all([
+    readFile("prisma/schema.prisma", "utf8"),
+    readFile("prisma/migrations/20260719213000_show_homepage_quote_by_default/migration.sql", "utf8"),
+  ]);
 
   assert.match(schema, /model HomepageQuoteSettings/);
-  assert.match(schema, /isQuoteCardVisible\s+Boolean\s+@default\(false\)/);
+  assert.match(schema, /isQuoteCardVisible\s+Boolean\s+@default\(true\)/);
   assert.match(schema, /isAutoGenerateActive\s+Boolean\s+@default\(false\)/);
   assert.match(schema, /manualQuoteText\s+String/);
   assert.match(schema, /manualQuoteAuthor\s+String/);
+  assert.match(migration, /UPDATE "HomepageQuoteSettings"[\s\S]*"isQuoteCardVisible" = true/);
 });
 
 test("homepage quote helper returns null when card is hidden", async () => {

@@ -68,6 +68,8 @@ export const contactMessageSchema = z.object({
   appointmentId: z.string().cuid().optional(),
   subject: z.string().trim().min(1).max(120),
   body: z.string().trim().min(1).max(2000),
+}).refine((value) => !(value.appointmentRequestId && value.appointmentId), {
+  message: "Informe somente um contexto de atendimento",
 });
 
 const manualAppointmentBaseSchema = z.object({

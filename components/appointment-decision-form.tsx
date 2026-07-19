@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { toIsoDateTime } from "@/lib/date-time";
+
 export function AppointmentDecisionForm({ requestId }: { requestId: string }) {
   const router = useRouter();
   const [note, setNote] = useState("");
@@ -11,7 +13,7 @@ export function AppointmentDecisionForm({ requestId }: { requestId: string }) {
 
   async function decide(status: "CONFIRMED" | "DECLINED" | "PROPOSED") {
     setError("");
-    const response = await fetch(`/api/v1/appointment-requests/${requestId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status, confirmedStart: proposed || undefined, adminNote: note || undefined }) });
+    const response = await fetch(`/api/v1/appointment-requests/${requestId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status, confirmedStart: proposed ? toIsoDateTime(proposed) : undefined, adminNote: note || undefined }) });
     if (!response.ok) { const result = await response.json(); setError(result.error?.message ?? "Não foi possível atualizar."); return; }
     router.refresh();
   }

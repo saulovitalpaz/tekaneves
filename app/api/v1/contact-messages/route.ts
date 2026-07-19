@@ -1,6 +1,7 @@
 import { apiData, apiError } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { canSendContextMessage } from "@/lib/message-access";
 import { contactMessageSchema } from "@/lib/validation";
 
 export async function GET() {
@@ -15,13 +16,18 @@ export async function POST(request: Request) {
   if (!user) return apiError("UNAUTHENTICATED", "Entre para enviar uma mensagem.", 401);
   const parsed = contactMessageSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Confira assunto e mensagem.", 400);
-  const recipient = await prisma.user.findUnique({ where: { id: parsed.data.recipientId } });
+  const recipient = await prisma.user.findUnique({ where: { id: parsed.data.recipientId }, select: { id: true, role: true } });
   if (!recipient || recipient.id === user.id) return apiError("RECIPIENT_NOT_FOUND", "Destinatário inválido.", 404);
 
   if (user.role === "CLIENT" && recipient.role !== "THERAPIST" && recipient.role !== "ADMIN") return apiError("FORBIDDEN", "Você só pode contatar a equipe de atendimento.", 403);
-  if (parsed.data.appointmentRequestId) {
-    const appointmentRequest = await prisma.appointmentRequest.findUnique({ where: { id: parsed.data.appointmentRequestId } });
-    if (!appointmentRequest || (user.role === "CLIENT" && appointmentRequest.clientId !== user.id) || (user.role === "THERAPIST" && appointmentRequest.therapistId !== user.id)) return apiError("FORBIDDEN", "Mensagem sem vínculo permitido.", 403);
+  const messageContext = parsed.data.appointmentRequestId
+    ? await prisma.appointmentRequest.findUnique({ where: { id: parsed.data.appointmentRequestId }, select: { clientId: true, therapistId: true } })
+    : parsed.data.appointmentId
+      ? await prisma.appointment.findUnique({ where: { id: parsed.data.appointmentId }, select: { clientId: true, therapistId: true } })
+      : null;
+  const hasContextReference = Boolean(parsed.data.appointmentRequestId || parsed.data.appointmentId);
+  if (hasContextReference && (!messageContext || !canSendContextMessage(user, recipient, messageContext))) {
+    return apiError("FORBIDDEN", "Mensagem sem vínculo permitido.", 403);
   }
   const message = await prisma.contactMessage.create({ data: { senderId: user.id, recipientId: recipient.id, appointmentRequestId: parsed.data.appointmentRequestId, appointmentId: parsed.data.appointmentId, subject: parsed.data.subject, body: parsed.data.body } });
   return apiData({ id: message.id }, 201);

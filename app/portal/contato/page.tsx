@@ -4,22 +4,20 @@ import { ContactRequestForm } from "@/components/contact-request-form";
 import { MessageList } from "@/components/message-list";
 import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
-import { getPrimaryTherapist } from "@/lib/primary-therapist";
 
-export default async function PortalContactPage(props: { searchParams?: Promise<{ context?: string }> | { context?: string } }) {
+export default async function PortalContactPage(props: { searchParams?: Promise<{ context?: string }> }) {
   const user = await requireUser();
   const searchParams = props.searchParams ? await props.searchParams : {};
   const contextId = searchParams.context;
 
-  const [therapist, requests, allMessages] = await Promise.all([
-    getPrimaryTherapist(),
+  const [requests, allMessages] = await Promise.all([
     prisma.appointmentRequest.findMany({ where: { clientId: user.id }, select: { id: true, desiredStart: true, therapist: { select: { id: true, name: true } } }, orderBy: { desiredStart: "desc" } }),
     prisma.contactMessage.findMany({ 
       where: { 
         OR: [{ senderId: user.id }, { recipientId: user.id }]
       }, 
       include: { sender: { select: { name: true } }, recipient: { select: { name: true } } }, 
-      orderBy: { createdAt: "desc" } 
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }]
     }),
   ]);
 
@@ -82,15 +80,12 @@ export default async function PortalContactPage(props: { searchParams?: Promise<
               <MessageList messages={messages} chatMode={true} />
             </div>
             <div className="chat-input-area">
-              {therapist ? (
-                <ContactRequestForm 
-                  recipientId={activeContext.therapist.id || therapist.id} 
-                  appointmentRequestId={activeContext.id}
-                  chatMode={true} 
-                />
-              ) : (
-                <p className="form-feedback error">Nenhuma psicanalista disponível.</p>
-              )}
+              <ContactRequestForm
+                key={activeContext.id}
+                recipientId={activeContext.therapist.id}
+                appointmentRequestId={activeContext.id}
+                chatMode={true}
+              />
             </div>
           </>
         ) : (

@@ -39,6 +39,19 @@ export async function listInternalConversation(currentUserId: string, partnerId:
   });
 }
 
+export async function listStaffClientConversation(clientId: string) {
+  return prisma.contactMessage.findMany({
+    where: {
+      OR: [
+        { senderId: clientId, recipient: { role: { in: ["ADMIN", "THERAPIST"] } } },
+        { recipientId: clientId, sender: { role: { in: ["ADMIN", "THERAPIST"] } } },
+      ],
+    },
+    include: messageRelations,
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+}
+
 type MessagingScope = {
   id: string;
   role: "ADMIN" | "THERAPIST" | "CLIENT";

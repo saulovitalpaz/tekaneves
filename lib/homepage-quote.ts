@@ -22,7 +22,7 @@ export type HomepageQuoteResolverOptions = {
 export const HOMEPAGE_QUOTE_CACHE_MS = 60 * 60 * 1000;
 
 const fallbackSettings: HomepageQuoteSettings = {
-  isQuoteCardVisible: false,
+  isQuoteCardVisible: true,
   isAutoGenerateActive: false,
   manualQuoteText: "A escuta cuidadosa ajuda a abrir novos caminhos.",
   manualQuoteAuthor: "Teka Neves",

@@ -5,9 +5,9 @@ import { MessageList } from "@/components/message-list";
 import { AdminChatSidebar } from "@/components/admin-chat-sidebar";
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
-import { listClientMessageRecipients, listInternalConversation } from "@/lib/internal-messages";
+import { listClientMessageRecipients, listStaffClientConversation } from "@/lib/internal-messages";
 
-export default async function AdminMessagesPage(props: { searchParams?: Promise<{ recipient?: string }> | { recipient?: string } }) {
+export default async function AdminMessagesPage(props: { searchParams?: Promise<{ recipient?: string }> }) {
   const user = await requireRole(["ADMIN", "THERAPIST"]);
   const searchParams = props.searchParams ? await props.searchParams : {};
   const recipientId = searchParams.recipient;
@@ -17,8 +17,8 @@ export default async function AdminMessagesPage(props: { searchParams?: Promise<
     listClientMessageRecipients(user),
   ]);
 
-  const messages = recipientId ? await listInternalConversation(user.id, recipientId) : [];
   const activeRecipient = recipientId ? clientRecipients.find(c => c.id === recipientId) : null;
+  const messages = activeRecipient ? await listStaffClientConversation(activeRecipient.id) : [];
 
   return (
     <div>
@@ -55,6 +55,7 @@ export default async function AdminMessagesPage(props: { searchParams?: Promise<
                 </div>
                 <div className="chat-input-area">
                   <ContactRequestForm 
+                    key={activeRecipient.id}
                     recipientId={activeRecipient.id} 
                     chatMode={true} 
                   />

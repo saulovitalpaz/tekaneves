@@ -27,13 +27,27 @@ test("homepage mantém apenas o início sem chamada redundante de contato", asyn
   assert.doesNotMatch(siteContent.footer, /desenvolvimento|mock|local/i);
 });
 
-test("homepage integra o título à imagem profile", async () => {
+test("homepage usa a imagem aprovada como fundo integral do hero", async () => {
   const source = await readFile("components/home-entry.tsx", "utf8");
   const css = await readFile("app/globals.css", "utf8");
 
-  assert.match(source, /home-profile-title/);
-  assert.match(css, /\.home-profile-title/);
-  assert.match(css, /\.home-entry-card\s*\{[^}]*radial-gradient/);
+  assert.match(source, /src="\/images\/home-background\.png"/);
+  assert.match(source, /className="home-entry-background"/);
+  assert.match(source, /className="home-entry-media"/);
+  assert.match(css, /\.home-entry-media\s*\{[^}]*aspect-ratio: 16 \/ 9/);
+  assert.match(css, /\.home-entry-background\s*\{[^}]*object-fit: contain/);
+  assert.doesNotMatch(css, /\.home-entry-card\s*\{[^}]*radial-gradient/);
+});
+
+test("homepage centraliza o backdrop e esmaece sua extensão inferior", async () => {
+  const source = await readFile("components/home-entry.tsx", "utf8");
+  const css = await readFile("app/globals.css", "utf8");
+
+  assert.match(source, /className="home-entry-backdrop"/);
+  assert.match(css, /\.home-entry-backdrop\s*\{[^}]*background-position: center/);
+  assert.match(css, /\.home-entry-backdrop\s*\{[^}]*background-size: cover/);
+  assert.match(css, /\.home-entry-backdrop\s*\{[^}]*mask-image: linear-gradient\([^}]*transparent/);
+  assert.doesNotMatch(css, /\.home-entry\s*\{[^}]*margin:\s*0;/);
 });
 
 test("homepage renders quote card from server data without public external fetch", async () => {

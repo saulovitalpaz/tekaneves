@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { listClientMessageRecipients, listInternalConversation } from "@/lib/internal-messages";
+import { listClientMessageRecipients, listInternalConversation, listStaffClientConversation } from "@/lib/internal-messages";
 import { prisma } from "@/lib/db";
 
 test("terapeuta pode selecionar clientes autocadastrados como destinatários", async () => {
@@ -29,10 +29,38 @@ test("página de mensagens usa seletor de destinatário em vez do primeiro remet
   ]);
 
   assert.match(page, /listClientMessageRecipients/);
-  assert.match(page, /recipients=\{clientRecipients\}/);
+  assert.match(page, /listStaffClientConversation/);
+  assert.match(page, /key=\{activeRecipient\.id\}/);
   assert.doesNotMatch(page, /messages\[0\]\?\.sender/);
   assert.match(form, /<select/);
   assert.match(form, /selectedRecipientId/);
+});
+
+test("conversa compartilhada reúne equipe e cliente sem misturar outro cliente", async () => {
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const [admin, therapist, client, otherClient] = await Promise.all([
+    prisma.user.create({ data: { name: "Admin compartilhado", email: `shared-admin-${suffix}@test.local`, passwordHash: "hash", role: "ADMIN" } }),
+    prisma.user.create({ data: { name: "Terapeuta compartilhada", email: `shared-therapist-${suffix}@test.local`, passwordHash: "hash", role: "THERAPIST" } }),
+    prisma.user.create({ data: { name: "Cliente compartilhado", email: `shared-client-${suffix}@test.local`, passwordHash: "hash", role: "CLIENT" } }),
+    prisma.user.create({ data: { name: "Outro cliente", email: `shared-other-${suffix}@test.local`, passwordHash: "hash", role: "CLIENT" } }),
+  ]);
+
+  try {
+    const messages = await Promise.all([
+      prisma.contactMessage.create({ data: { senderId: client.id, recipientId: therapist.id, subject: "Cliente", body: "Para terapeuta" } }),
+      prisma.contactMessage.create({ data: { senderId: admin.id, recipientId: client.id, subject: "Admin", body: "Para cliente" } }),
+      prisma.contactMessage.create({ data: { senderId: otherClient.id, recipientId: therapist.id, subject: "Outro", body: "Não incluir" } }),
+    ]);
+
+    const conversation = await listStaffClientConversation(client.id);
+
+    assert.ok(conversation.some((message) => message.id === messages[0].id));
+    assert.ok(conversation.some((message) => message.id === messages[1].id));
+    assert.ok(!conversation.some((message) => message.id === messages[2].id));
+  } finally {
+    await prisma.contactMessage.deleteMany({ where: { OR: [{ senderId: { in: [admin.id, therapist.id, client.id, otherClient.id] } }, { recipientId: { in: [admin.id, therapist.id, client.id, otherClient.id] } }] } });
+    await prisma.user.deleteMany({ where: { id: { in: [admin.id, therapist.id, client.id, otherClient.id] } } });
+  }
 });
 
 test("histórico administrativo mostra conversa com mensagens enviadas e recebidas", async () => {

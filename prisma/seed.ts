@@ -60,6 +60,7 @@ async function main() {
     await prisma.homepageQuoteSettings.update({
       where: { id: existingQuoteSettings.id },
       data: {
+        isQuoteCardVisible: true,
         manualQuoteText: "A escuta cuidadosa ajuda a abrir novos caminhos.",
         manualQuoteAuthor: "Marilene Neves da Paz Lima",
       },
@@ -67,7 +68,7 @@ async function main() {
   } else {
     await prisma.homepageQuoteSettings.create({
       data: {
-        isQuoteCardVisible: false,
+        isQuoteCardVisible: true,
         isAutoGenerateActive: false,
         manualQuoteText: "A escuta cuidadosa ajuda a abrir novos caminhos.",
         manualQuoteAuthor: "Marilene Neves da Paz Lima",

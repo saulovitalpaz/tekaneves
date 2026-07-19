@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { toIsoDateTime } from "@/lib/date-time";
+
 type ClientOption = { id: string; name: string; email: string };
 type TherapistOption = { id: string; name: string };
 
@@ -32,7 +34,7 @@ export function AdminAppointmentForm({ clients, therapists }: AdminAppointmentFo
     const response = await fetch("/api/v1/admin/appointments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, mode, durationMinutes: Number(payload.durationMinutes ?? 50) }),
+      body: JSON.stringify({ ...payload, startAt: toIsoDateTime(payload.startAt), mode, durationMinutes: Number(payload.durationMinutes ?? 50) }),
     });
     const result = await response.json();
 

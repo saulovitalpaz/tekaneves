@@ -237,7 +237,7 @@ model HomepageInquiry {
 
 model HomepageQuoteSettings {
   id                   String   @id @default(cuid())
-  isQuoteCardVisible   Boolean  @default(false)
+  isQuoteCardVisible   Boolean  @default(true)
   isAutoGenerateActive Boolean  @default(false)
   manualQuoteText      String
   manualQuoteAuthor    String

@@ -7,7 +7,7 @@ test("a agenda administrativa separa operação de resumos privados", async () =
   assert.match(source, /AppointmentStatus\.CONFIRMED/);
   assert.match(source, /Próximos atendimentos/);
   assert.match(source, /Solicitações/);
-  assert.match(source, /Disponibilidades/);
+  assert.match(source, /Disponibilidade/);
   assert.match(source, /<details/);
   assert.doesNotMatch(source, /AppointmentSummaryForm/);
   assert.doesNotMatch(source, /Atendimentos concluídos/);
@@ -62,10 +62,12 @@ test("pré-cadastros podem ser rejeitados sem exclusão física", async () => {
   assert.match(component, /Rejeitar/);
 });
 
-test("o portal do cliente não consulta resumo clínico", async () => {
+test("o portal do cliente consulta apenas a nota explicitamente pública", async () => {
   const source = await readFile("app/portal/consultas/page.tsx", "utf8");
   assert.match(source, /appointment\?\.status \?\? request\.status/);
-  assert.doesNotMatch(source, /summary|AppointmentSummary/i);
+  assert.match(source, /summary:\s*\{\s*select:\s*\{\s*clientNote:\s*true/);
+  assert.doesNotMatch(source, /summary:\s*true|summary:\s*\{\s*include/);
+  assert.doesNotMatch(source, /summary\?\.body/);
 });
 
 test("o detalhe administrativo do cliente possui lembrete único e histórico privado", async () => {

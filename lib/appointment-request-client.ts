@@ -1,3 +1,5 @@
+import { toIsoDateTime } from "@/lib/date-time";
+
 export type AppointmentRequestPayload = {
   therapistId: FormDataEntryValue | null;
   desiredStart: FormDataEntryValue | null;
@@ -20,7 +22,7 @@ export async function submitAppointmentRequest(
     const response = await fetcher("/api/v1/appointment-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, desiredStart: toIsoDateTime(payload.desiredStart) }),
     });
     const result = (await response.json().catch(() => null)) as ApiResponse | null;
 
