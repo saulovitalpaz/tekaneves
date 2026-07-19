@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { siteContent } from "@/lib/content";
 
 import { FloatingContactButton } from "./floating-contact-button";
-import { SiteFooter } from "./site-footer";
+
 import { SiteHeader } from "./site-header";
 
 type PublicSiteFrameProps = {
@@ -15,7 +15,6 @@ export function PublicSiteFrame({ children }: PublicSiteFrameProps) {
     <div className="public-page">
       <SiteHeader brand={siteContent.brand} navigation={siteContent.navigation} />
       {children}
-      <SiteFooter brand={siteContent.brand.name} copy={siteContent.footer} />
       <FloatingContactButton />
     </div>
   );
