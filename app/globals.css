@@ -113,10 +113,11 @@ button, input, textarea, select { font: inherit; }
 .home-entry-title { max-width: 690px; margin: 1rem 0 1rem; color: var(--forest-deep); font-size: clamp(3rem, 5.4vw, 5.9rem); line-height: 0.96; }
 .home-entry-description { max-width: 520px; margin: 0; color: var(--ink); font-size: 1.08rem; line-height: 1.7; }
 .home-entry-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
-.home-profile { position: relative; justify-self: end; width: 100%; max-width: min(42vw, 520px); aspect-ratio: 0.9; overflow: hidden; border-radius: 48% 52% 44% 56% / 42% 38% 62% 58%; background: rgb(234 240 232 / 0.72); box-shadow: 0 24px 60px rgb(11 51 46 / 0.1); }
-.home-profile::before { content: ""; position: absolute; right: -18%; bottom: -10%; z-index: 0; width: 58%; aspect-ratio: 1; border-radius: 50%; background: rgb(229 174 96 / 0.22); }
-.home-profile-image { z-index: 1; object-fit: cover; object-position: center 16%; opacity: 0.88; filter: saturate(0.78) contrast(0.94); mix-blend-mode: multiply; }
-.home-profile-title { position: absolute; z-index: 2; left: 50%; bottom: 1rem; width: min(86%, 360px); margin: 0; transform: translateX(-50%); color: var(--white); font-size: clamp(2.1rem, 5vw, 4.3rem); line-height: 0.95; text-align: center; text-shadow: 0 3px 18px rgb(11 51 46 / 0.42); }
+.home-profile-wrapper { display: flex; flex-direction: column; gap: 1rem; justify-self: end; width: 100%; max-width: min(42vw, 520px); }
+.home-profile { position: relative; width: 100%; aspect-ratio: 0.85; overflow: hidden; border-radius: 1.5rem; background: var(--surface); box-shadow: 0 24px 60px rgb(11 51 46 / 0.15); }
+.home-profile-image { z-index: 1; object-fit: cover; object-position: center 16%; }
+.home-profile-caption { font-size: 0.85rem; color: var(--muted); line-height: 1.5; padding: 0 0.5rem; }
+.home-profile-caption strong { display: block; color: var(--forest-deep); font-size: 0.95rem; margin-bottom: 0.25rem; }
 .homepage-quote-section { padding: 0 0 clamp(2rem, 5vw, 4.5rem); }
 .homepage-quote-card { width: min(100%, 760px); margin: 0 auto; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: var(--card-radius); background: var(--surface); box-shadow: var(--card-shadow); text-align: center; }
 .homepage-quote-card blockquote { margin: 0; }
@@ -164,7 +165,7 @@ button, input, textarea, select { font: inherit; }
 @media (max-width: 860px) {
   .home-entry-card, .contact-panel { grid-template-columns: 1fr; }
   .home-entry-card { min-height: 0; }
-  .home-profile { justify-self: center; width: min(74vw, 390px); max-width: min(74vw, 390px); order: -1; }
+  .home-profile-wrapper { justify-self: center; width: min(74vw, 390px); max-width: min(74vw, 390px); order: -1; }
   .contact-panel { gap: 2.5rem; }
 }
 
@@ -182,7 +183,7 @@ button, input, textarea, select { font: inherit; }
   .home-entry-description { font-size: 0.98rem; line-height: 1.55; }
   .home-entry-actions { display: grid; width: 100%; }
   .home-entry-actions .button-primary, .home-entry-actions .button-secondary { width: 100%; }
-  .home-profile { width: min(78vw, 300px); max-width: min(78vw, 300px); }
+  .home-profile-wrapper { width: min(78vw, 300px); max-width: min(78vw, 300px); }
   .contact-section { padding-bottom: 3rem; }
   .contact-panel { padding: 1.15rem; border-radius: var(--card-radius); }
   .footer-content { flex-direction: column; }

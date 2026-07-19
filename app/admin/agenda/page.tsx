@@ -41,35 +41,6 @@ export default async function AdminAgendaPage() {
         </div>
       </div>
 
-      <div className="dashboard-grid compact-dashboard">
-        <article className="data-card"><span>Solicitações pendentes</span><strong>{pending.length}</strong></article>
-        <article className="data-card"><span>Consultas confirmadas</span><strong>{confirmed.length}</strong></article>
-        <article className="data-card"><span>Pré-cadastros</span><strong>{preRegistrations.length}</strong></article>
-      </div>
-
-      <section className="portal-panel">
-        <div className="panel-heading"><div><p className="eyebrow">Inserção manual</p><h2 className="display-font">Inserir na agenda</h2></div></div>
-        <AdminAppointmentForm clients={clients} therapists={therapists} />
-      </section>
-
-      <section className="portal-panel">
-        <div className="panel-heading"><div><p className="eyebrow">Pré-cadastros</p><h2 className="display-font">Vincular ao autocadastro</h2></div></div>
-        {preRegistrations.length ? <div className="pre-registration-list">{preRegistrations.map((registration) => (
-          <article className="pre-registration-card" key={registration.id}>
-            <div>
-              <strong>{registration.name}</strong>
-              <span>{[registration.email, registration.phone].filter(Boolean).join(" · ") || "Contato não informado"}</span>
-              {registration.note && <p>{registration.note}</p>}
-              {registration.appointments.map((appointment) => <small key={appointment.id}>{appointment.therapist.name} · {appointment.startAt.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</small>)}
-            </div>
-            <div className="pre-registration-actions">
-              <PreRegistrationLinkForm preRegistrationId={registration.id} clients={clients} />
-              <PreRegistrationRejectButton preRegistrationId={registration.id} />
-            </div>
-          </article>
-        ))}</div> : <div className="empty-state"><h3>Nenhum pré-cadastro pendente</h3><p>Horários criados sem cliente cadastrado aparecerão aqui para vínculo.</p></div>}
-      </section>
-
       <section className="portal-panel">
         <div className="panel-heading"><div><p className="eyebrow">Agenda</p><h2 className="display-font">Próximos atendimentos</h2></div></div>
         {confirmed.length ? confirmed.map((appointment) => (
@@ -96,16 +67,45 @@ export default async function AdminAgendaPage() {
         ))}</div> : <div className="empty-state"><h3>Nenhuma solicitação pendente</h3><p>Quando um cliente pedir um horário, ele aparecerá aqui.</p></div>}
       </section>
 
-      <details className="portal-panel collapsible-panel">
-        <summary><span>Disponibilidades</span><strong>Janelas de atendimento</strong></summary>
-        {profiles.map((profile) => (
-          <div className="availability-block" key={profile.id}>
-            <strong>{profile.user.name}</strong>
-            <AvailabilityList therapistId={profile.userId} items={profile.availabilities} />
-            <AvailabilityForm therapistId={profile.userId} />
+      <section className="portal-panel">
+        <div className="panel-heading"><div><p className="eyebrow">Gerenciamento</p><h2 className="display-font">Inserir na agenda</h2></div></div>
+        <div style={{ marginBottom: "2rem" }}>
+          <AdminAppointmentForm clients={clients} therapists={therapists} />
+        </div>
+        
+        <details style={{ padding: "1.25rem", border: "1px solid var(--line)", borderRadius: "var(--card-radius)", background: "var(--paper-deep)" }}>
+          <summary style={{ cursor: "pointer", fontWeight: 700, color: "var(--forest-deep)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            Configurar janelas de atendimento (Disponibilidade)
+          </summary>
+          <div style={{ marginTop: "1rem", paddingTop: "1rem", borderTop: "1px solid var(--line)" }}>
+            {profiles.map((profile) => (
+              <div className="availability-block" key={profile.id}>
+                <strong style={{ display: "block", marginBottom: "0.5rem" }}>{profile.user.name}</strong>
+                <AvailabilityList therapistId={profile.userId} items={profile.availabilities} />
+                <AvailabilityForm therapistId={profile.userId} />
+              </div>
+            ))}
           </div>
-        ))}
-      </details>
+        </details>
+      </section>
+
+      <section className="portal-panel">
+        <div className="panel-heading"><div><p className="eyebrow">Pré-cadastros</p><h2 className="display-font">Vincular ao autocadastro</h2></div></div>
+        {preRegistrations.length ? <div className="pre-registration-list">{preRegistrations.map((registration) => (
+          <article className="pre-registration-card" key={registration.id}>
+            <div>
+              <strong>{registration.name}</strong>
+              <span>{[registration.email, registration.phone].filter(Boolean).join(" · ") || "Contato não informado"}</span>
+              {registration.note && <p>{registration.note}</p>}
+              {registration.appointments.map((appointment) => <small key={appointment.id}>{appointment.therapist.name} · {appointment.startAt.toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}</small>)}
+            </div>
+            <div className="pre-registration-actions">
+              <PreRegistrationLinkForm preRegistrationId={registration.id} clients={clients} />
+              <PreRegistrationRejectButton preRegistrationId={registration.id} />
+            </div>
+          </article>
+        ))}</div> : <div className="empty-state"><h3>Nenhum pré-cadastro pendente</h3><p>Horários criados sem cliente cadastrado aparecerão aqui para vínculo.</p></div>}
+      </section>
     </div>
   );
 }

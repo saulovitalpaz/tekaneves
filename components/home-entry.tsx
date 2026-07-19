@@ -9,6 +9,8 @@ type HomeEntryProps = {
     contactLabel: string;
     imageAlt: string;
     imagePriority: boolean;
+    fullName: string;
+    academicFormation: string;
   };
 };
 
@@ -24,16 +26,21 @@ export function HomeEntry({ content }: HomeEntryProps) {
             <Link className="button-primary" href="/contato">{content.contactLabel}<span aria-hidden="true">→</span></Link>
           </div>
         </div>
-        <div className="home-profile">
-          <h2 className="display-font home-profile-title">{content.title}</h2>
-          <Image
-            className="home-profile-image"
-            src="/images/profile.jpeg"
-            alt={content.imageAlt}
-            fill
-            priority={content.imagePriority}
-            sizes="(max-width: 720px) calc(100vw - 3rem), (max-width: 1100px) 43vw, 610px"
-          />
+        <div className="home-profile-wrapper">
+          <div className="home-profile">
+            <Image
+              className="home-profile-image"
+              src="/images/profile.jpeg"
+              alt={content.imageAlt}
+              fill
+              priority={content.imagePriority}
+              sizes="(max-width: 720px) calc(100vw - 3rem), (max-width: 1100px) 43vw, 610px"
+            />
+          </div>
+          <div className="home-profile-caption">
+            <strong>{content.fullName}</strong>
+            <p>{content.academicFormation}</p>
+          </div>
         </div>
       </div>
     </section>
